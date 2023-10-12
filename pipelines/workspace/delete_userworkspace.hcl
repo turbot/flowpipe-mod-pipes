@@ -1,5 +1,8 @@
 pipeline "delete_userworkspace" {
 
+  title       = "Destroy user workspace"
+  description = "Pipeline to destroy a user workspace."
+
   param "token" {
     type    = string
     default = var.token
@@ -16,6 +19,7 @@ pipeline "delete_userworkspace" {
 
 
   step "http" "delete_userworkspace" {
+      title       = "Destroy user workspace"
     url                = "https://pipes.turbot.com/api/v0/user/${param.user_handle}/workspace/${param.workspace_handle}"
     method             = "delete"
     insecure           = false
@@ -29,9 +33,7 @@ pipeline "delete_userworkspace" {
   output "response_body" {
     value = jsondecode(step.http.delete_userworkspace.response_body)
   }
-  output "response_headers" {
-    value = step.http.delete_userworkspace.response_headers
-  }
+
   output "status_code" {
     value = step.http.delete_userworkspace.status_code
   }

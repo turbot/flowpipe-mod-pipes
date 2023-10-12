@@ -1,5 +1,6 @@
 pipeline "create_orgworkspace" {
-
+  title       = "Create an organization workspace"
+  description = "Create an organization workspace."
   param "pipes_token" {
     type    = string
     default = var.pipes_token
@@ -20,6 +21,7 @@ pipeline "create_orgworkspace" {
   }
 
   step "http" "create_orgworkspace" {
+      title       = "Create an organization workspace"
     url                = "https://pipes.turbot.com/api/v0/org/${param.org_handle}/workspace"
     method             = "post"
     insecure           = false
@@ -37,9 +39,7 @@ pipeline "create_orgworkspace" {
   output "response_body" {
     value = jsondecode(step.http.create_orgworkspace.response_body)
   }
-  output "response_headers" {
-    value = step.http.create_orgworkspace.response_headers
-  }
+
   output "status_code" {
     value = step.http.create_orgworkspace.status_code
   }
