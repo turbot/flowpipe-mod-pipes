@@ -1,4 +1,4 @@
-pipeline "remove_pipes_user_from_org" {
+pipeline "remove_user_from_org" {
 
   param "pipes_token" {
     type    = string
@@ -18,7 +18,7 @@ pipeline "remove_pipes_user_from_org" {
 #    default = var.pipes_user
 #      default = "partha-tppr"
   }
-  step "http" "create_org_workspace" {
+  step "http" "remove_user_from_org" {
 //https://pipes.turbot.com/api/v0/org/{org_handle}/member/{user_handle}
     url                = "https://pipes.turbot.com/api/v0/org/${param.org_handle}/member/${param.user_handle}"
     method             = "delete"
@@ -31,12 +31,12 @@ pipeline "remove_pipes_user_from_org" {
   }
 
   output "response_body" {
-    value = jsondecode(step.http.pipes_get_users.response_body)
+    value = jsondecode(step.http.remove_user_from_org.response_body)
   }
   output "response_headers" {
-    value = step.http.pipes_get_users.response_headers
+    value = step.http.remove_user_from_org.response_headers
   }
   output "status_code" {
-    value = step.http.pipes_get_users.status_code
+    value = step.http.remove_user_from_org.status_code
   }
 }

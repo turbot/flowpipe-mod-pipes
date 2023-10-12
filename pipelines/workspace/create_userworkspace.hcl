@@ -1,12 +1,12 @@
-pipeline "create_pipes_userworkspace" {
+pipeline "create_userworkspace" {
 
-  param "pipes_token" {
+  param "token" {
     type    = string
-    default = var.pipes_token
+    default = var.token
   }
   param "user_handle" {
     type    = string
-    default = var.pipes_user
+    default = var.user
   }
 
   param "instance_handle" {
@@ -19,7 +19,7 @@ pipeline "create_pipes_userworkspace" {
     default = "db1.shared"
   }
 
-  step "http" "create_org_workspace" {
+  step "http" "create_userworkspace" {
     url                = "https://pipes.turbot.com/api/v0/user/${param.user_handle}/workspace"
     method             = "post"
     insecure           = false
@@ -35,12 +35,12 @@ pipeline "create_pipes_userworkspace" {
   }
 
   output "response_body" {
-    value = jsondecode(step.http.pipes_get_users.response_body)
+    value = jsondecode(step.http.create_userworkspace.response_body)
   }
   output "response_headers" {
-    value = step.http.pipes_get_users.response_headers
+    value = step.http.create_userworkspace.response_headers
   }
   output "status_code" {
-    value = step.http.pipes_get_users.status_code
+    value = step.http.create_userworkspace.status_code
   }
 }

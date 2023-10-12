@@ -1,4 +1,4 @@
-pipeline "describe_pipes_user" {
+pipeline "describe_user" {
 
   param "pipes_token" {
     type    = string
@@ -10,11 +10,9 @@ pipeline "describe_pipes_user" {
     default = var.pipes_user
   }
 
-  step "echo" "lookup_url" {
-    text = "https://pipes.turbot.com/api/latest/user/${param.pipes_user}"
-  }
+
   # curl https://pipes.turbot.com/api/v0/user
-  step "http" "pipes_get_user" {
+  step "http" "describe_user" {
     url                = "https://pipes.turbot.com/api/latest/user/${param.pipes_user}"
     method             = "get"
     insecure           = false
@@ -26,13 +24,13 @@ pipeline "describe_pipes_user" {
   }
 
   output "response_body" {
-    value = step.http.pipes_get_users.response_body
+    value = step.http.describe_user.response_body
   }
   output "response_headers" {
-    value = step.http.pipes_get_users.response_headers
+    value = step.http.describe_user.response_headers
   }
   output "status_code" {
-    value = step.http.pipes_get_users.status_code
+    value = step.http.describe_user.status_code
   }
 
 }
