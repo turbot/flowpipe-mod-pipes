@@ -13,18 +13,15 @@ pipeline "invite_user_to_org_by_handle" {
   param "role" {
     type    = string
     default = var.org_role
-    # valid values: owner, member
   }
 
   param "user_handle" {
-    type = string
+    type    = string
     default = var.pipes_user
-
   }
 
-
   step "http" "invite_user_to_org_by_handle" {
-  title       = "Invite user to organization by user handle"
+    title              = "Invite user to organization by user handle"
     url                = "https://pipes.turbot.com/api/v0/org/${param.org_handle}/member/invite"
     method             = "post"
     insecure           = false

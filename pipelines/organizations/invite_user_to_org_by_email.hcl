@@ -1,4 +1,3 @@
-
 pipeline "invite_pipes_user_to_org_by_email" {
   title       = "Invite user to organization by user email address"
   description = "Invite user to an organization by that user's email address."
@@ -19,13 +18,11 @@ pipeline "invite_pipes_user_to_org_by_email" {
 
   param "email" {
     type    = string
-    #    default = var.user_email
-    default = "joe+member@turbot.com"
+    default = var.user_email
   }
 
-
   step "http" "invite_pipes_user_to_org_by_email" {
-    title = "Invite user to organization by user email address"
+    title              = "Invite user to organization by user email address"
     url                = "https://pipes.turbot.com/api/v0/org/${param.org_handle}/member/invite"
     method             = "post"
     insecure           = false

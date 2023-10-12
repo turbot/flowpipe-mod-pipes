@@ -15,13 +15,12 @@ pipeline "remove_user_from_org" {
     # valid values: owner, member
   }
   param "user_handle" {
-    type = string
-#    default = var.pipes_user
-#      default = "partha-tppr"
+    type    = string
+    default = var.pipes_user
   }
-  step "http" "remove_user_from_org" {
-      title       = "Remove user from organization"
 
+  step "http" "remove_user_from_org" {
+    title              = "Remove user from organization"
     url                = "https://pipes.turbot.com/api/v0/org/${param.org_handle}/member/${param.user_handle}"
     method             = "delete"
     insecure           = false

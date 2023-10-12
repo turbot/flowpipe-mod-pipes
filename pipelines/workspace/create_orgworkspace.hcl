@@ -12,16 +12,16 @@ pipeline "create_orgworkspace" {
 
   param "instance_handle" {
     type    = string
-    default = "taurus2"
+    default = var.instance_handle
   }
 
   param "instance_type" {
-    type = string
-    default = "db1.shared"
+    type    = string
+    default = var.instance_type
   }
 
   step "http" "create_orgworkspace" {
-      title       = "Create an organization workspace"
+    title              = "Create an organization workspace"
     url                = "https://pipes.turbot.com/api/v0/org/${param.org_handle}/workspace"
     method             = "post"
     insecure           = false

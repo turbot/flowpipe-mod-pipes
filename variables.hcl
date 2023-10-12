@@ -30,7 +30,13 @@ variable "workspace_handle" {
 
 variable "org_role" {
   type = string
-  description = "Org role assigned to user"
+  description = "Org role assigned to user. Valid values: ['owner', 'member']"
   default = "member"
   # valid values: owner, member
+}
+
+variable "instance_type" {
+  type = string
+  description = "Workspace instance type. Valid values: ['db1.shared', 'db1.small']"
+  default = "db1.shared"
 }

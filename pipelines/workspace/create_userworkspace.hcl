@@ -12,16 +12,16 @@ pipeline "create_userworkspace" {
 
   param "instance_handle" {
     type    = string
-    default = "taurus"
+    default = var.instance_handle
   }
 
   param "instance_type" {
     type    = string
-    default = "db1.shared"
+    default = var.instance_type
   }
 
   step "http" "create_userworkspace" {
-      title       = "Create user workspace"
+    title              = "Create user workspace"
     url                = "https://pipes.turbot.com/api/v0/user/${param.user_handle}/workspace"
     method             = "post"
     insecure           = false
