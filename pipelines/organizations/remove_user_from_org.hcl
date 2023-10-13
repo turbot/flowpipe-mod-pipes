@@ -20,7 +20,7 @@ pipeline "remove_user_from_org" {
   }
 
   step "http" "remove_user_from_org" {
-    title              = "Delete the user from the org"
+    title              = "Delete the user from the org."
     url                = "https://pipes.turbot.com/api/v0/org/${param.org_handle}/member/${param.user_handle}"
     method             = "delete"
     insecure           = false

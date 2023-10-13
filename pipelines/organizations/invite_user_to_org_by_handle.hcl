@@ -21,7 +21,7 @@ pipeline "invite_user_to_org_by_handle" {
   }
 
   step "http" "invite_user_to_org_by_handle" {
-    title              = "Invite user to organization by user handle"
+    title              = "Invite member to an org."
     url                = "https://pipes.turbot.com/api/v0/org/${param.org_handle}/member/invite"
     method             = "post"
     insecure           = false

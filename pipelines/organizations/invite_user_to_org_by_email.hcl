@@ -22,7 +22,7 @@ pipeline "invite_pipes_user_to_org_by_email" {
   }
 
   step "http" "invite_pipes_user_to_org_by_email" {
-    title              = "Invite user to organization by user email address"
+    title              = "Invite member to an org."
     url                = "https://pipes.turbot.com/api/v0/org/${param.org_handle}/member/invite"
     method             = "post"
     insecure           = false
