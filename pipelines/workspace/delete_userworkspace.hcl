@@ -1,7 +1,7 @@
 pipeline "delete_userworkspace" {
 
-  title       = "Destroy user workspace"
-  description = "Pipeline to destroy a user workspace."
+  title       = "Deletes a user workspace"
+  description = "Deletes the workspace specified in the request by the user."
 
   param "token" {
     type    = string
@@ -19,7 +19,7 @@ pipeline "delete_userworkspace" {
 
 
   step "http" "delete_userworkspace" {
-      title       = "Destroy user workspace"
+      title       = "Deletes the workspace specified in the request by the user."
     url                = "https://pipes.turbot.com/api/v0/user/${param.user_handle}/workspace/${param.workspace_handle}"
     method             = "delete"
     insecure           = false

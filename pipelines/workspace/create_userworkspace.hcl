@@ -1,6 +1,6 @@
 pipeline "create_userworkspace" {
   title       = "Create user workspace"
-  description = "Create user workspace."
+  description = "Creates a new workspace for a user."
   param "token" {
     type    = string
     default = var.token
@@ -21,7 +21,7 @@ pipeline "create_userworkspace" {
   }
 
   step "http" "create_userworkspace" {
-    title              = "Create user workspace"
+    title              = "Creates a new workspace for a user."
     url                = "https://pipes.turbot.com/api/v0/user/${param.user_handle}/workspace"
     method             = "post"
     insecure           = false

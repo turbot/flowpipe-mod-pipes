@@ -1,6 +1,6 @@
 pipeline "delete_orgworkspace" {
   title       = "Delete an organization workspace"
-  description = "Delete an organization workspace."
+  description = "Deletes the workspace specified in the request."
   param "pipes_token" {
     type    = string
     default = var.token
@@ -17,7 +17,7 @@ pipeline "delete_orgworkspace" {
 
 
   step "http" "delete_orgworkspace" {
-    title              = "Delete an organization workspace"
+    title              = "Deletes the workspace specified in the request."
     url                = "https://pipes.turbot.com/api/v0/org/${param.org_handle}/workspace/${param.workspace_handle}"
     method             = "delete"
     insecure           = false

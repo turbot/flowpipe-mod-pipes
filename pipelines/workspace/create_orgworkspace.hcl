@@ -21,7 +21,7 @@ pipeline "create_orgworkspace" {
   }
 
   step "http" "create_orgworkspace" {
-    title              = "Create an organization workspace"
+    title              = "Creates a new workspace for an organization. The limit is 10 per organization. If you require more than 10, you must contact support to request an increase."
     url                = "https://pipes.turbot.com/api/v0/org/${param.org_handle}/workspace"
     method             = "post"
     insecure           = false
