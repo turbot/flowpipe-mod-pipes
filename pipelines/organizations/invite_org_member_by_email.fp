@@ -42,7 +42,7 @@ pipeline "invite_org_member_by_email" {
   }
 
   output "invitation_details" {
-    value       = step.http.invite_org_member_by_handle.response_body
+    value       = step.http.invite_org_member_by_email.response_body
     description = "The details of the invitation."
   }
 }
