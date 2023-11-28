@@ -1,4 +1,4 @@
-mod "pipes_integrations" {
+mod "pipes" {
   title         = "Turbot Pipes Library"
   description   = "Run pipelines to supercharge your Pipes workflows using Flowpipe."
   color         = "#FABF1B"
