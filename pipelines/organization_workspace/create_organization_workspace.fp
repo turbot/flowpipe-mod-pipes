@@ -1,5 +1,5 @@
-pipeline "create_org_workspace" {
-  title       = "Create Org Workspace"
+pipeline "create_organization_workspace" {
+  title       = "Create Organization Workspace"
   description = "Creates a new workspace for an organization."
 
   param "token" {
@@ -8,7 +8,7 @@ pipeline "create_org_workspace" {
     default     = var.token
   }
 
-  param "org_handle" {
+  param "organization_handle" {
     type        = string
     description = "The handle of the organization where the workspace has to be created."
   }
@@ -20,15 +20,12 @@ pipeline "create_org_workspace" {
 
   param "instance_type" {
     type        = string
-    description = "The type of the instance to be created."
+    description = "The type of the instance to be created. Expected values are 'db1.shared' and 'db1.small'."
   }
 
-  step "http" "create_org_workspace" {
+  step "http" "create_organization_workspace" {
     method = "post"
-    url    = "https://pipes.turbot.com/api/v0/org/${param.org_handle}/workspace"
-
-    insecure           = false
-    request_timeout_ms = 2000
+    url    = "https://pipes.turbot.com/api/v0/org/${param.organization_handle}/workspace"
 
     request_headers = {
       Content-Type  = "application/json"
@@ -36,13 +33,13 @@ pipeline "create_org_workspace" {
     }
 
     request_body = jsonencode({
-      handle        = "${param.workspace_handle}"
-      instance_type = "${param.instance_type}"
+      handle        = param.workspace_handle
+      instance_type = param.instance_type
     })
   }
 
-  output "org_workspace" {
-    value       = step.http.create_org_workspace.response_body
+  output "organization_workspace" {
+    value       = step.http.create_organization_workspace.response_body
     description = "The created workspace."
   }
 }

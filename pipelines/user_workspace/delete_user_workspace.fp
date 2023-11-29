@@ -23,9 +23,6 @@ pipeline "delete_user_workspace" {
     method = "delete"
     url    = "https://pipes.turbot.com/api/v0/user/${param.user_handle}/workspace/${param.workspace_handle}"
 
-    insecure           = false
-    request_timeout_ms = 2000
-
     request_headers = {
       Content-Type  = "application/json"
       Authorization = "Bearer ${param.token}"

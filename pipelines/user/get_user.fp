@@ -1,6 +1,6 @@
 pipeline "get_user" {
   title       = "Get User"
-  description = "Retrieves information of the specified user."
+  description = "Retrieves information of a user by handle."
 
   param "token" {
     type        = string
@@ -16,9 +16,6 @@ pipeline "get_user" {
   step "http" "get_user" {
     method = "get"
     url    = "https://pipes.turbot.com/api/latest/user/${param.user_handle}"
-
-    insecure           = false
-    request_timeout_ms = 2000
 
     request_headers = {
       Content-Type  = "application/json"

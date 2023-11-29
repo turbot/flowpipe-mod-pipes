@@ -1,4 +1,4 @@
-pipeline "invite_org_member_by_handle" {
+pipeline "invite_organization_member_by_handle" {
   title       = "Invite Org Member by Handle"
   description = "Invite member to an org by user handle."
 
@@ -8,7 +8,7 @@ pipeline "invite_org_member_by_handle" {
     default     = var.token
   }
 
-  param "org_handle" {
+  param "organization_handle" {
     type        = string
     description = "The handle of an organization where the member has to be invited."
   }
@@ -23,12 +23,9 @@ pipeline "invite_org_member_by_handle" {
     description = "The role to be assigned to the member."
   }
 
-  step "http" "invite_org_member_by_handle" {
+  step "http" "invite_organization_member_by_handle" {
     method = "post"
-    url    = "https://pipes.turbot.com/api/v0/org/${param.org_handle}/member/invite"
-
-    insecure           = false
-    request_timeout_ms = 2000
+    url    = "https://pipes.turbot.com/api/v0/org/${param.organization_handle}/member/invite"
 
     request_headers = {
       Content-Type  = "application/json"
@@ -36,13 +33,13 @@ pipeline "invite_org_member_by_handle" {
     }
 
     request_body = jsonencode({
-      handle = "${param.user_handle}"
-      role   = "${param.role}"
+      handle = param.user_handle
+      role   = param.role
     })
   }
 
   output "invitation_details" {
-    value       = step.http.invite_org_member_by_handle.response_body
+    value       = step.http.invite_organization_member_by_handle.response_body
     description = "The details of the invitation."
   }
 }

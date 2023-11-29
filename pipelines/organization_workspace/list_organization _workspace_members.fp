@@ -1,6 +1,6 @@
-pipeline "list_org_workspace_member" {
-  title       = "List Workspace Members of Organization"
-  description = "List members in a workspace for an organization."
+pipeline "list_organization_workspace_members" {
+  title       = "List Organization Workspace Members"
+  description = "List members in an organization workspace."
 
   param "token" {
     type        = string
@@ -8,7 +8,7 @@ pipeline "list_org_workspace_member" {
     default     = var.token
   }
 
-  param "org_handle" {
+  param "organization_handle" {
     type        = string
     description = "The handle of the organization where the workspace has to be created."
   }
@@ -18,12 +18,9 @@ pipeline "list_org_workspace_member" {
     description = "The handle name of the workspace to be created."
   }
 
-  step "http" "list_org_workspace_member" {
+  step "http" "list_organization_workspace_members" {
     method = "get"
-    url    = "https://pipes.turbot.com/api/v0/org/${param.org_handle}/workspace/${param.workspace_handle}/member"
-
-    insecure           = false
-    request_timeout_ms = 2000
+    url    = "https://pipes.turbot.com/api/v0/org/${param.organization_handle}/workspace/${param.workspace_handle}/member"
 
     request_headers = {
       Content-Type  = "application/json"
@@ -31,13 +28,12 @@ pipeline "list_org_workspace_member" {
     }
 
     request_body = jsonencode({
-      handle = "${param.workspace_handle}"
+      handle = param.workspace_handle
     })
-
   }
 
   output "members" {
-    value       = step.http.list_org_workspace_member
-    description = "The list of workspace members within an organization."
+    value       = step.http.list_organization_workspace_members
+    description = "The list of members within an organization workspace."
   }
 }

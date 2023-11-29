@@ -1,5 +1,5 @@
-pipeline "delete_org_workspace" {
-  title       = "Delete Org Workspace"
+pipeline "delete_organization_workspace" {
+  title       = "Delete Organization Workspace"
   description = "Deletes the workspace specified in the request."
 
   param "token" {
@@ -8,7 +8,7 @@ pipeline "delete_org_workspace" {
     default     = var.token
   }
 
-  param "org_handle" {
+  param "organization_handle" {
     type        = string
     description = "The handle of the organization where the workspace exist."
   }
@@ -18,13 +18,9 @@ pipeline "delete_org_workspace" {
     description = "The handle of the workspace to be deleted."
   }
 
-
-  step "http" "delete_org_workspace" {
+  step "http" "delete_organization_workspace" {
     method = "delete"
-    url    = "https://pipes.turbot.com/api/v0/org/${param.org_handle}/workspace/${param.workspace_handle}"
-
-    insecure           = false
-    request_timeout_ms = 2000
+    url    = "https://pipes.turbot.com/api/v0/org/${param.organization_handle}/workspace/${param.workspace_handle}"
 
     request_headers = {
       Content-Type  = "application/json"
@@ -33,7 +29,7 @@ pipeline "delete_org_workspace" {
   }
 
   output "deleted_workspace" {
-    value       = step.http.delete_org_workspace.response_body
+    value       = step.http.delete_organization_workspace.response_body
     description = "The deleted workspace."
   }
 }

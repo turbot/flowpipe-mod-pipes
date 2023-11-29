@@ -1,5 +1,5 @@
-pipeline "delete_org_member" {
-  title       = "Delete Org Member"
+pipeline "delete_organization_member" {
+  title       = "Delete Organization Member"
   description = "Delete the user from the org."
 
   param "token" {
@@ -8,7 +8,7 @@ pipeline "delete_org_member" {
     default     = var.token
   }
 
-  param "org_handle" {
+  param "organization_handle" {
     type        = string
     description = "The handle of an organization from where the member has to be deleted."
   }
@@ -18,12 +18,9 @@ pipeline "delete_org_member" {
     description = "The handle of the user to be deleted."
   }
 
-  step "http" "delete_org_member" {
+  step "http" "delete_organization_member" {
     method = "delete"
-    url    = "https://pipes.turbot.com/api/v0/org/${param.org_handle}/member/${param.user_handle}"
-
-    insecure           = false
-    request_timeout_ms = 2000
+    url    = "https://pipes.turbot.com/api/v0/org/${param.organization_handle}/member/${param.user_handle}"
 
     request_headers = {
       Content-Type  = "application/json"
@@ -32,7 +29,7 @@ pipeline "delete_org_member" {
   }
 
   output "member" {
-    value       = step.http.delete_org_member.response_body
+    value       = step.http.delete_organization_member.response_body
     description = "The details of the deleted member."
   }
 }

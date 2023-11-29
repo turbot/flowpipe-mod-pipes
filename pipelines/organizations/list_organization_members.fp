@@ -1,6 +1,6 @@
-pipeline "list_org_members" {
+pipeline "list_organization_members" {
   title       = "List Organization Members"
-  description = "Retrieves information about rganization members."
+  description = "Retrieves information about organization members."
 
   param "token" {
     type        = string
@@ -8,17 +8,14 @@ pipeline "list_org_members" {
     default     = var.token
   }
 
-  param "org_handle" {
+  param "organization_handle" {
     type        = string
     description = "The handle of the organization where the workspace has to be created."
   }
 
-  step "http" "list_org_members" {
+  step "http" "list_organization_members" {
     method = "get"
-    url    = "https://pipes.turbot.com/api/latest/org/${param.org_handle}/member"
-
-    insecure           = false
-    request_timeout_ms = 2000
+    url    = "https://pipes.turbot.com/api/latest/org/${param.organization_handle}/member"
 
     request_headers = {
       Content-Type  = "application/json"
@@ -27,7 +24,7 @@ pipeline "list_org_members" {
   }
 
   output "members" {
-    value       = step.http.list_org_members.response_body
-    description = "The list of members of the organization."
+    value       = step.http.list_organization_members.response_body
+    description = "List of organization members."
   }
 }

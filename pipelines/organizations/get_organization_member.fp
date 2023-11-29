@@ -1,4 +1,4 @@
-pipeline "get_org_member" {
+pipeline "get_organization_member" {
   title       = "Get Organization Member"
   description = "Retrieves information of the specified user in organization."
 
@@ -13,18 +13,14 @@ pipeline "get_org_member" {
     description = "The handle of the user to retrieve."
   }
 
-  param "org_handle" {
+  param "organization_handle" {
     type        = string
     description = "The handle of the organization where the workspace has to be created."
-    default     = "fastfolloworg"
   }
 
-  step "http" "get_org_member" {
+  step "http" "get_organization_member" {
     method = "get"
-    url    = "https://pipes.turbot.com/api/latest/org/${param.org_handle}/member/${param.user_handle}"
-
-    insecure           = false
-    request_timeout_ms = 2000
+    url    = "https://pipes.turbot.com/api/latest/org/${param.organization_handle}/member/${param.user_handle}"
 
     request_headers = {
       Content-Type  = "application/json"
@@ -33,7 +29,7 @@ pipeline "get_org_member" {
   }
 
   output "member" {
-    value       = step.http.get_org_member
+    value       = step.http.get_organization_member
     description = "The organization user details."
   }
 }

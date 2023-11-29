@@ -20,15 +20,12 @@ pipeline "create_user_workspace" {
 
   param "instance_type" {
     type        = string
-    description = "The type of the instance to be created."
+    description = "The type of the instance to be created. Expected values are db1.shared and 'db1.small'."
   }
 
   step "http" "create_user_workspace" {
     method = "post"
     url    = "https://pipes.turbot.com/api/v0/user/${param.user_handle}/workspace"
-
-    insecure           = false
-    request_timeout_ms = 2000
 
     request_headers = {
       Content-Type  = "application/json"
@@ -36,8 +33,8 @@ pipeline "create_user_workspace" {
     }
 
     request_body = jsonencode({
-      handle        = "${param.workspace_handle}"
-      instance_type = "${param.instance_type}"
+      handle        = param.workspace_handle
+      instance_type = param.instance_type
     })
   }
 
