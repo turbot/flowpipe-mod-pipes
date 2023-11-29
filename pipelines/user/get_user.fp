@@ -24,7 +24,7 @@ pipeline "get_user" {
   }
 
   output "user" {
+    description = "User details."
     value       = step.http.get_user.response_body
-    description = "The user details."
   }
 }

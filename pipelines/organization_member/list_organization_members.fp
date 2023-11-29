@@ -24,7 +24,7 @@ pipeline "list_organization_members" {
   }
 
   output "members" {
-    value       = step.http.list_organization_members.response_body
     description = "List of organization members."
+    value       = step.http.list_organization_members.response_body
   }
 }

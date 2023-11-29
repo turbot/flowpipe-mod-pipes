@@ -1,5 +1,5 @@
-# Usage: flowpipe pipeline run add_organization_workspace_member --arg role="reader" --arg organization_handle="<orgname>" --arg member_handle="<handle-name>" --arg workspace_handle="<workspace-name>"
-pipeline "add_organization_workspace_member" {
+# Usage: flowpipe pipeline run create_organization_workspace_member --arg role="reader" --arg organization_handle="<orgname>" --arg member_handle="<handle-name>" --arg workspace_handle="<workspace-name>"
+pipeline "create_organization_workspace_member" {
   title       = "Create Organization Workspace Member"
   description = "Creates a new member for the workspace in the organization."
 
@@ -29,7 +29,7 @@ pipeline "add_organization_workspace_member" {
     description = "The workspace role name assigned to the member. It supports reader, operator and owner as role."
   }
 
-  step "http" "add_organization_workspace_member" {
+  step "http" "create_organization_workspace_member" {
     method = "post"
     url    = "https://pipes.turbot.com/api/v0/org/${param.organization_handle}/workspace/${param.workspace_handle}/member"
 
@@ -45,7 +45,7 @@ pipeline "add_organization_workspace_member" {
   }
 
   output "member" {
-    value       = step.http.add_organization_workspace_member.response_body
+    value       = step.http.create_organization_workspace_member.response_body
     description = "The information about added members to the workspace."
   }
 }
