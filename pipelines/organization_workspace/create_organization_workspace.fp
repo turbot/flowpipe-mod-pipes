@@ -39,7 +39,7 @@ pipeline "create_organization_workspace" {
   }
 
   output "organization_workspace" {
+    description = "Workspace details."
     value       = step.http.create_organization_workspace.response_body
-    description = "The created workspace."
   }
 }

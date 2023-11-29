@@ -1,6 +1,6 @@
 pipeline "invite_organization_member_by_handle" {
-  title       = "Invite Org Member by Handle"
-  description = "Invite member to an org by user handle."
+  title       = "Invite Organization Member by Handle"
+  description = "Invite member to an organization by user handle."
 
   param "token" {
     type        = string
@@ -39,7 +39,7 @@ pipeline "invite_organization_member_by_handle" {
   }
 
   output "invitation_details" {
-    value       = step.http.invite_organization_member_by_handle.response_body
     description = "The details of the invitation."
+    value       = step.http.invite_organization_member_by_handle.response_body
   }
 }

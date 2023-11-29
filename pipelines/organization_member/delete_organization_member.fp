@@ -1,6 +1,6 @@
 pipeline "delete_organization_member" {
   title       = "Delete Organization Member"
-  description = "Delete the user from the org."
+  description = "Delete the user from the organization."
 
   param "token" {
     type        = string
@@ -29,7 +29,7 @@ pipeline "delete_organization_member" {
   }
 
   output "member" {
-    value       = step.http.delete_organization_member.response_body
     description = "The details of the deleted member."
+    value       = step.http.delete_organization_member.response_body
   }
 }

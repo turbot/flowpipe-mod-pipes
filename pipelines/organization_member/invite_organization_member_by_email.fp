@@ -1,6 +1,6 @@
 pipeline "invite_organization_member_by_email" {
   title       = "Invite Organization Member by Email"
-  description = "Invite member to an org by user email address."
+  description = "Invite member to an organization by user email address."
 
   param "token" {
     type        = string
@@ -39,7 +39,7 @@ pipeline "invite_organization_member_by_email" {
   }
 
   output "invitation_details" {
-    value       = step.http.invite_organization_member_by_email.response_body
     description = "The details of the invitation."
+    value       = step.http.invite_organization_member_by_email.response_body
   }
 }

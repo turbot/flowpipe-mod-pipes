@@ -29,7 +29,7 @@ pipeline "delete_organization_workspace" {
   }
 
   output "deleted_workspace" {
-    value       = step.http.delete_organization_workspace.response_body
     description = "The deleted workspace."
+    value       = step.http.delete_organization_workspace.response_body
   }
 }

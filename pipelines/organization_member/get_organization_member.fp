@@ -29,7 +29,7 @@ pipeline "get_organization_member" {
   }
 
   output "member" {
-    value       = step.http.get_organization_member
     description = "The organization user details."
+    value       = step.http.get_organization_member
   }
 }
