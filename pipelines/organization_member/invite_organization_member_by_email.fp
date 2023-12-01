@@ -10,7 +10,7 @@ pipeline "invite_organization_member_by_email" {
 
   param "organization_handle" {
     type        = string
-    description = "The handle of an organization where the member has to be invited."
+    description = "Specify the handle of an organization where the member need to be invited."
   }
 
   param "email" {
@@ -38,7 +38,7 @@ pipeline "invite_organization_member_by_email" {
     })
   }
 
-  output "invitation_details" {
+  output "invitation" {
     description = "The details of the invitation."
     value       = step.http.invite_organization_member_by_email.response_body
   }

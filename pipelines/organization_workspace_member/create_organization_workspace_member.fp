@@ -1,7 +1,6 @@
-# Usage: flowpipe pipeline run create_organization_workspace_member --arg role="reader" --arg organization_handle="<orgname>" --arg member_handle="<handle-name>" --arg workspace_handle="<workspace-name>"
 pipeline "create_organization_workspace_member" {
   title       = "Create Organization Workspace Member"
-  description = "Creates a new member for the workspace in the organization."
+  description = "Add an individual as a member of a workspace in an organization."
 
   param "token" {
     type        = string
@@ -11,12 +10,12 @@ pipeline "create_organization_workspace_member" {
 
   param "organization_handle" {
     type        = string
-    description = "The handle of the organization where the workspace has to be created."
+    description = "Specify the handle of the organization where the member need to be invited."
   }
 
   param "workspace_handle" {
     type        = string
-    description = "The  workspace handle name to be created."
+    description = "Specify the handle of the workspace where the member need to be invited."
   }
 
   param "member_handle" {

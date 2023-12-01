@@ -10,12 +10,12 @@ pipeline "get_organization_member" {
 
   param "user_handle" {
     type        = string
-    description = "The handle of the user to retrieve."
+    description = "Specify the organization handle where the member is associated."
   }
 
   param "organization_handle" {
     type        = string
-    description = "The handle of the organization where the workspace has to be created."
+    description = "Specify the handle of the user whose information you want to retrieve."
   }
 
   step "http" "get_organization_member" {

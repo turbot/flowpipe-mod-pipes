@@ -20,7 +20,7 @@ pipeline "create_user_workspace" {
 
   param "instance_type" {
     type        = string
-    description = "The type of the instance to be created. Expected values are db1.shared and 'db1.small'."
+    description = "The type of the instance to be created. Expected values are 'db1.shared' and 'db1.small'."
   }
 
   step "http" "create_user_workspace" {

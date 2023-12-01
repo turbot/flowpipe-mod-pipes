@@ -10,7 +10,7 @@ pipeline "create_organization_workspace" {
 
   param "organization_handle" {
     type        = string
-    description = "The handle of the organization where the workspace has to be created."
+    description = "The handle of the organization where we want to create the workspace."
   }
 
   param "workspace_handle" {

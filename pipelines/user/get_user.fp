@@ -1,6 +1,6 @@
 pipeline "get_user" {
   title       = "Get User"
-  description = "Retrieves information of a user by handle."
+  description = "Retrieves information of the specified user."
 
   param "token" {
     type        = string
@@ -10,7 +10,7 @@ pipeline "get_user" {
 
   param "user_handle" {
     type        = string
-    description = "The handle of the user to retrieve."
+    description = "Specify the handle of the user whose information you want to retrieve."
   }
 
   step "http" "get_user" {

@@ -15,7 +15,7 @@ pipeline "delete_organization_workspace" {
 
   param "workspace_handle" {
     type        = string
-    description = "The handle of the workspace to be deleted."
+    description = "Provide the handle of the workspace which needs to be deleted."
   }
 
   step "http" "delete_organization_workspace" {
@@ -28,7 +28,7 @@ pipeline "delete_organization_workspace" {
     }
   }
 
-  output "deleted_workspace" {
+  output "organization_workspace" {
     description = "The deleted workspace."
     value       = step.http.delete_organization_workspace.response_body
   }

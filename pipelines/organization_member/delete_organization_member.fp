@@ -10,12 +10,12 @@ pipeline "delete_organization_member" {
 
   param "organization_handle" {
     type        = string
-    description = "The handle of an organization from where the member has to be deleted."
+    description = "Specify the handle of the organization where the member exists."
   }
 
   param "user_handle" {
     type        = string
-    description = "The handle of the user to be deleted."
+    description = "Specify the handle of the user which need to be removed."
   }
 
   step "http" "delete_organization_member" {
