@@ -38,8 +38,7 @@ pipeline "list_organization_workspace_members" {
   }
 
   output "members" {
-    value = flatten([for page, members in step.http.list_organization_workspace_members : members.response_body.items])
-
     description = "The list of members within an organization workspace."
+    value       = flatten([for page, members in step.http.list_organization_workspace_members : members.response_body.items])
   }
 }

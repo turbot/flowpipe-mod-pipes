@@ -15,7 +15,7 @@ pipeline "list_organization_members" {
 
   step "http" "list_organization_members" {
     method = "get"
-    url    = "https://pipes.turbot.com/api/latest/org/${param.org_handle}/member?limit=100"
+    url    = "https://pipes.turbot.com/api/latest/org/${param.org_handle}/member?limit=1"
 
     request_headers = {
       Content-Type  = "application/json"
@@ -24,12 +24,12 @@ pipeline "list_organization_members" {
 
     loop {
       until = lookup(result.response_body, "next_token", null) == null
-      url   = "https://pipes.turbot.com/api/latest/org/${param.org_handle}/member?limit=100&next_token=${result.response_body.next_token}"
+      url   = "https://pipes.turbot.com/api/latest/org/${param.org_handle}/member?limit=1&next_token=${result.response_body.next_token}"
     }
   }
 
   output "members" {
     description = "List of organization members."
-    value       = step.http.list_organization_members.response_body
+    value       = flatten([for page, members in step.http.list_organization_members : members.response_body.items])
   }
 }
