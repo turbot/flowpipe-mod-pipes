@@ -2,13 +2,13 @@ pipeline "delete_organization_workspace" {
   title       = "Delete Organization Workspace"
   description = "Deletes the workspace specified in the request."
 
-  param "token" {
+  param "cred" {
     type        = string
-    description = local.token_param_description
-    default     = var.token
+    description = local.cred_param_description
+    default     = "default"
   }
 
-  param "organization_handle" {
+  param "org_handle" {
     type        = string
     description = "The handle of the organization where the workspace exist."
   }
@@ -20,11 +20,11 @@ pipeline "delete_organization_workspace" {
 
   step "http" "delete_organization_workspace" {
     method = "delete"
-    url    = "https://pipes.turbot.com/api/v0/org/${param.organization_handle}/workspace/${param.workspace_handle}"
+    url    = "https://pipes.turbot.com/api/v0/org/${param.org_handle}/workspace/${param.workspace_handle}"
 
     request_headers = {
       Content-Type  = "application/json"
-      Authorization = "Bearer ${param.token}"
+      Authorization = "Bearer ${credential.pipes[param.cred].token}"
     }
   }
 

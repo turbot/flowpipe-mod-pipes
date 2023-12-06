@@ -2,10 +2,10 @@ pipeline "delete_user_workspace" {
   title       = "Delete User Workspace"
   description = "Deletes the workspace specified in the request by the user."
 
-  param "token" {
+  param "cred" {
     type        = string
-    description = local.token_param_description
-    default     = var.token
+    description = local.cred_param_description
+    default     = "default"
   }
 
   param "user_handle" {
@@ -25,7 +25,7 @@ pipeline "delete_user_workspace" {
 
     request_headers = {
       Content-Type  = "application/json"
-      Authorization = "Bearer ${param.token}"
+      Authorization = "Bearer ${credential.pipes[param.cred].token}"
     }
   }
 

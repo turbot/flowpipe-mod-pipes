@@ -2,39 +2,38 @@ pipeline "invite_organization_member_by_handle" {
   title       = "Invite Organization Member by Handle"
   description = "Invite member to an organization by user handle."
 
-  param "token" {
+  param "cred" {
     type        = string
-    description = local.token_param_description
-    default     = var.token
+    description = local.cred_param_description
+    default     = "default"
   }
 
-  param "organization_handle" {
+  param "org_handle" {
     type        = string
     description = "Specify the handle of an organization where the member need to be invited."
   }
 
-  param "user_handle" {
+  param "handle" {
     type        = string
     description = "The handle of the user to be invited."
   }
 
   param "role" {
     type        = string
-    description = "The role to be assigned to the member."
+    description = "The role to be assigned to the member. Supported values are member and owner."
   }
 
   step "http" "invite_organization_member_by_handle" {
     method = "post"
-    url    = "https://pipes.turbot.com/api/v0/org/${param.organization_handle}/member/invite"
+    url    = "https://pipes.turbot.com/api/v0/org/${param.org_handle}/member/invite"
 
     request_headers = {
       Content-Type  = "application/json"
-      Authorization = "Bearer ${param.token}"
+      Authorization = "Bearer ${credential.pipes[param.cred].token}"
     }
 
     request_body = jsonencode({
-      handle = param.user_handle
-      role   = param.role
+      for name, value in param : name => value if value != null
     })
   }
 

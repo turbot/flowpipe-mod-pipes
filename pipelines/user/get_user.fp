@@ -2,10 +2,10 @@ pipeline "get_user" {
   title       = "Get User"
   description = "Retrieves information of the specified user."
 
-  param "token" {
+  param "cred" {
     type        = string
-    description = local.token_param_description
-    default     = var.token
+    description = local.cred_param_description
+    default     = "default"
   }
 
   param "user_handle" {
@@ -19,7 +19,7 @@ pipeline "get_user" {
 
     request_headers = {
       Content-Type  = "application/json"
-      Authorization = "Bearer ${param.token}"
+      Authorization = "Bearer ${credential.pipes[param.cred].token}"
     }
   }
 

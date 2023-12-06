@@ -2,29 +2,29 @@ pipeline "list_organization_members" {
   title       = "List Organization Members"
   description = "List all members of an organization who are invited / accepted."
 
-  param "token" {
+  param "cred" {
     type        = string
-    description = local.token_param_description
-    default     = var.token
+    description = local.cred_param_description
+    default     = "default"
   }
 
-  param "organization_handle" {
+  param "org_handle" {
     type        = string
     description = "Specify the organization handle."
   }
 
   step "http" "list_organization_members" {
     method = "get"
-    url    = "https://pipes.turbot.com/api/latest/org/${param.organization_handle}/member?limit=100"
+    url    = "https://pipes.turbot.com/api/latest/org/${param.org_handle}/member?limit=100"
 
     request_headers = {
       Content-Type  = "application/json"
-      Authorization = "Bearer ${param.token}"
+      Authorization = "Bearer ${credential.pipes[param.cred].token}"
     }
 
     loop {
-      until = result.response_body.next_token == null || result.response_body.next_token.length == 0
-      url   = "https://pipes.turbot.com/api/latest/org/${param.organization_handle}/member?limit=100&next_token=${result.response_body.next_token}"
+      until = lookup(result.response_body, "next_token", null) == null
+      url   = "https://pipes.turbot.com/api/latest/org/${param.org_handle}/member?limit=100&next_token=${result.response_body.next_token}"
     }
   }
 

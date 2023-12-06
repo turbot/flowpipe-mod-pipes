@@ -1,4 +1,4 @@
 # Common descriptions
 locals {
-  token_param_description = "Pipes API Token."
+  cred_param_description = "Name for credentials to use. If not provided, the default credentials will be used."
 }

@@ -2,10 +2,10 @@ pipeline "create_user_workspace" {
   title       = "Create User Workspace"
   description = "Creates a new workspace for a user."
 
-  param "token" {
+  param "cred" {
     type        = string
-    description = local.token_param_description
-    default     = var.token
+    description = local.cred_param_description
+    default     = "default"
   }
 
   param "user_handle" {
@@ -13,9 +13,9 @@ pipeline "create_user_workspace" {
     description = "The handle of the user where we want to create the workspace."
   }
 
-  param "workspace_handle" {
+  param "handle" {
     type        = string
-    description = "The handle name of the workspace to be created."
+    description = "The handle name of the workspace to create."
   }
 
   param "instance_type" {
@@ -29,12 +29,11 @@ pipeline "create_user_workspace" {
 
     request_headers = {
       Content-Type  = "application/json"
-      Authorization = "Bearer ${param.token}"
+      Authorization = "Bearer ${credential.pipes[param.cred].token}"
     }
 
     request_body = jsonencode({
-      handle        = param.workspace_handle
-      instance_type = param.instance_type
+      for name, value in param : name => value if value != null
     })
   }
 

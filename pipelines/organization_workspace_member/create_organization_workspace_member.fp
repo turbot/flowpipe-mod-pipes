@@ -2,13 +2,13 @@ pipeline "create_organization_workspace_member" {
   title       = "Create Organization Workspace Member"
   description = "Add an individual as a member of a workspace in an organization."
 
-  param "token" {
+  param "cred" {
     type        = string
-    description = local.token_param_description
-    default     = var.token
+    description = local.cred_param_description
+    default     = "default"
   }
 
-  param "organization_handle" {
+  param "org_handle" {
     type        = string
     description = "Specify the handle of the organization where the member need to be invited."
   }
@@ -18,7 +18,7 @@ pipeline "create_organization_workspace_member" {
     description = "Specify the handle of the workspace where the member need to be invited."
   }
 
-  param "member_handle" {
+  param "handle" {
     type        = string
     description = "The member's login handle to be part of workspace."
   }
@@ -30,16 +30,15 @@ pipeline "create_organization_workspace_member" {
 
   step "http" "create_organization_workspace_member" {
     method = "post"
-    url    = "https://pipes.turbot.com/api/v0/org/${param.organization_handle}/workspace/${param.workspace_handle}/member"
+    url    = "https://pipes.turbot.com/api/v0/org/${param.org_handle}/workspace/${param.workspace_handle}/member"
 
     request_headers = {
       Content-Type  = "application/json"
-      Authorization = "Bearer ${param.token}"
+      Authorization = "Bearer ${credential.pipes[param.cred].token}"
     }
 
     request_body = jsonencode({
-      handle = param.member_handle
-      role   = param.role
+      for name, value in param : name => value if value != null
     })
   }
 

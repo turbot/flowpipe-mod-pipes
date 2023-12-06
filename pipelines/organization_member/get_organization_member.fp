@@ -2,10 +2,10 @@ pipeline "get_organization_member" {
   title       = "Get Organization Member"
   description = "Retrieves information of the specified user in organization."
 
-  param "token" {
+  param "cred" {
     type        = string
-    description = local.token_param_description
-    default     = var.token
+    description = local.cred_param_description
+    default     = "default"
   }
 
   param "user_handle" {
@@ -13,18 +13,18 @@ pipeline "get_organization_member" {
     description = "Specify the organization handle where the member is associated."
   }
 
-  param "organization_handle" {
+  param "org_handle" {
     type        = string
     description = "Specify the handle of the user whose information you want to retrieve."
   }
 
   step "http" "get_organization_member" {
     method = "get"
-    url    = "https://pipes.turbot.com/api/latest/org/${param.organization_handle}/member/${param.user_handle}"
+    url    = "https://pipes.turbot.com/api/latest/org/${param.org_handle}/member/${param.user_handle}"
 
     request_headers = {
       Content-Type  = "application/json"
-      Authorization = "Bearer ${param.token}"
+      Authorization = "Bearer ${credential.pipes[param.cred].token}"
     }
   }
 
