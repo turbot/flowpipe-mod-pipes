@@ -2,6 +2,10 @@ pipeline "create_organization_workspace" {
   title       = "Create Organization Workspace"
   description = "Creates a new workspace for an organization."
 
+  tags = {
+    type = "featured"
+  }
+
   param "cred" {
     type        = string
     description = local.cred_param_description

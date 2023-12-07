@@ -2,6 +2,10 @@ pipeline "create_user_workspace" {
   title       = "Create User Workspace"
   description = "Creates a new workspace for a user."
 
+  tags = {
+    type = "featured"
+  }
+
   param "cred" {
     type        = string
     description = local.cred_param_description

@@ -2,6 +2,10 @@ pipeline "delete_organization_member" {
   title       = "Delete Organization Member"
   description = "Delete the user from the organization."
 
+  tags = {
+    type = "featured"
+  }
+
   param "cred" {
     type        = string
     description = local.cred_param_description

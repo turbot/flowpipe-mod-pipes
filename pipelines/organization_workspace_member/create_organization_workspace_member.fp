@@ -2,6 +2,10 @@ pipeline "create_organization_workspace_member" {
   title       = "Create Organization Workspace Member"
   description = "Add an individual as a member of a workspace in an organization."
 
+  tags = {
+    type = "featured"
+  }
+
   param "cred" {
     type        = string
     description = local.cred_param_description
