@@ -4,7 +4,7 @@ mod "pipes" {
   color         = "#FABF1B"
   documentation = file("./docs/index.md")
   icon          = "/images/flowpipe/mods/turbot/pipes.svg"
-  categories    = ["pipes"]
+  categories    = ["data management"]
 
   opengraph {
     title       = "Turbot Pipes Mod for Flowpipe"
