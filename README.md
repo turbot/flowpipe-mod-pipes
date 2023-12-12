@@ -76,6 +76,10 @@ flowpipe pipeline run get_user --arg user_handle='turbot' --arg cred=my_pipes
 
 For more examples on how you can run pipelines, please see [Run Pipelines](https://flowpipe.io/docs/run/pipelines).
 
+### Configuration
+
+No additional configuration is required.
+
 ## Contributing
 
 If you have an idea for additional pipelines or just want to help maintain and extend this mod ([or others](https://github.com/topics/flowpipe-mod)) we would love you to join the community and start contributing.
