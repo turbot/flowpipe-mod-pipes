@@ -2,7 +2,7 @@ mod "pipes" {
   title         = "Turbot Pipes"
   description   = "Run pipelines to supercharge your Pipes workflows using Flowpipe."
   color         = "#FABF1B"
-  documentation = file("./docs/index.md")
+  documentation = file("./README.md")
   icon          = "/images/mods/turbot/pipes.svg"
   categories    = ["data management"]
 

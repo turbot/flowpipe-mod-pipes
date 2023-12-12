@@ -1,18 +1,16 @@
 # Pipes Mod for Flowpipe
 
-A collection of [Flowpipe](https://flowpipe.io) pipelines that can be used to:
-- Create Workspaces
-- Invite Members
-- Get Users
-- And more!
-
-<!-- ![image](https://github.com/turbot/flowpipe-mod-pipes/blob/main/docs/images/flowpipe_test_run.png?raw=true) -->
+Pipes pipeline library for [Flowpipe](https://flowpipe.io), enabling seamless integration of Pipes services into your workflows.
 
 ## Documentation
 
 - **[Pipelines →](https://hub.flowpipe.io/mods/turbot/pipes/pipelines)**
 
 ## Getting Started
+
+### Requirements
+
+Docker daemon must be installed and running. Please see [Install Docker Engine](https://docs.docker.com/engine/install/) for more information.
 
 ### Installation
 
@@ -30,29 +28,32 @@ git clone https://github.com/turbot/flowpipe-mod-pipes.git
 cd flowpipe-mod-pipes
 ```
 
-### Configuration
+### Credentials
 
-Configure your credentials:
+By default, the following environment variables will be used for authentication:
+
+- `PIPES_TOKEN`
+
+You can also create `credential` resources in configuration files:
 
 ```sh
-cp flowpipe.fpvars.example flowpipe.fpvars
-vi flowpipe.fpvars
+vi ~/.flowpipe/config/pipes.fpc
 ```
 
-It's recommended to configure credentials through [input variables](https://flowpipe.io/docs/using-flowpipe/mod-variables) by setting them in the `flowpipe.fpvars` file.
+```hcl
+credential "pipes" "my_pipes" {
+  token = "tpt_cld630jSCGU4yre79890csdjch79"
+}
+```
 
-**Note:** Credentials can also be passed in each pipeline run with `--arg token=YourAuthToken`.
-
-Additional input variables may be defined in the mod's `variables.fp` file that can be configured to better match your environment and requirements.
-
-Variables with defaults set do not need to be explicitly set, but it may be helpful to override them.
+For more information on credentials in Flowpipe, please see [Managing Credentials](https://flowpipe.io/docs/run/credentials).
 
 ### Usage
 
-Start the Flowpipe server to get started:
+List pipelines:
 
 ```sh
-flowpipe server
+flowpipe pipeline list
 ```
 
 Run a pipeline:
@@ -61,17 +62,19 @@ Run a pipeline:
 flowpipe pipeline run get_user --arg user_handle='turbot'
 ```
 
-## Passing pipeline arguments
-
-To pass values into pipeline [parameters](https://flowpipe.io/docs/using-flowpipe/pipeline-parameters), use the following syntax:
+You can pass in pipeline arguments as well:
 
 ```sh
-flowpipe pipeline run get_user --arg user_handle='turbot'
+flowpipe pipeline run get_organization_member --arg user_handle='turbot' --arg org_handle='turbot'
 ```
 
-Multiple pipeline args can be passed in with separate `--arg` flags.
+To use a specific `credential`, specify the `cred` pipeline argument:
 
-For more information on passing arguments, please see [Pipeline Args](https://flowpipe.io/docs/using-flowpipe/pipeline-arguments).
+```sh
+flowpipe pipeline run get_user --arg user_handle='turbot' --arg cred=my_pipes
+```
+
+For more examples on how you can run pipelines, please see [Run Pipelines](https://flowpipe.io/docs/run/pipelines).
 
 ## Contributing
 
