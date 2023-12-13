@@ -65,7 +65,7 @@ pipeline "my_pipeline" {
   step "pipeline" "list_organization_members" {
     pipeline = pipes.pipeline.list_organization_members
     args = {
-      org_handle = "your_org_handle"
+      org_handle = "acme-demo"
     }
   }
 }
@@ -95,13 +95,13 @@ flowpipe pipeline list
 Run a pipeline:
 
 ```sh
-flowpipe pipeline run get_user --arg user_handle='turbot'
+flowpipe pipeline run get_user --arg user_handle=turbot
 ```
 
 To use a specific `credential`, specify the `cred` pipeline argument:
 
 ```sh
-flowpipe pipeline run get_user --arg user_handle='turbot' --arg cred=my_pipes
+flowpipe pipeline run get_user --arg user_handle=turbot --arg cred=pipes_profile
 ```
 
 ## Open Source & Contributing
