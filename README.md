@@ -8,10 +8,6 @@ Pipes pipeline library for [Flowpipe](https://flowpipe.io), enabling seamless in
 
 ## Getting Started
 
-### Requirements
-
-Docker daemon must be installed and running. Please see [Install Docker Engine](https://docs.docker.com/engine/install/) for more information.
-
 ### Installation
 
 Download and install Flowpipe (https://flowpipe.io/downloads). Or use Brew:
@@ -19,13 +15,6 @@ Download and install Flowpipe (https://flowpipe.io/downloads). Or use Brew:
 ```sh
 brew tap turbot/tap
 brew install flowpipe
-```
-
-Clone:
-
-```sh
-git clone https://github.com/turbot/flowpipe-mod-pipes.git
-cd flowpipe-mod-pipes
 ```
 
 ### Credentials
@@ -50,6 +39,53 @@ For more information on credentials in Flowpipe, please see [Managing Credential
 
 ### Usage
 
+[Initialize a mod](https://flowpipe.io/docs/build/index#initializing-a-mod):
+
+```sh
+mkdir my_mod
+cd my_mod
+flowpipe mod init
+```
+
+[Install the Pipes mod](https://flowpipe.io/docs/build/mod-dependencies#mod-dependencies) as a dependency:
+
+```sh
+flowpipe mod install github.com/turbot/flowpipe-mod-pipes
+```
+
+[Use the dependency](https://flowpipe.io/docs/build/write-pipelines/index) in a pipeline step:
+
+```sh
+vi my_pipeline.fp
+```
+
+```hcl
+pipeline "my_pipeline" {
+
+  step "pipeline" "list_organization_members" {
+    pipeline = pipes.pipeline.list_organization_members
+    args = {
+      org_handle = "your_org_handle"
+    }
+  }
+}
+```
+
+[Run the pipeline](https://flowpipe.io/docs/run/pipelines):
+
+```sh
+flowpipe pipeline run my_pipeline
+```
+
+### Developing
+
+Clone:
+
+```sh
+git clone https://github.com/turbot/flowpipe-mod-pipes.git
+cd flowpipe-mod-pipes
+```
+
 List pipelines:
 
 ```sh
@@ -62,39 +98,23 @@ Run a pipeline:
 flowpipe pipeline run get_user --arg user_handle='turbot'
 ```
 
-You can pass in pipeline arguments as well:
-
-```sh
-flowpipe pipeline run get_organization_member --arg user_handle='turbot' --arg org_handle='turbot'
-```
-
 To use a specific `credential`, specify the `cred` pipeline argument:
 
 ```sh
 flowpipe pipeline run get_user --arg user_handle='turbot' --arg cred=my_pipes
 ```
 
-For more examples on how you can run pipelines, please see [Run Pipelines](https://flowpipe.io/docs/run/pipelines).
+## Open Source & Contributing
 
-### Configuration
+This repository is published under the [Apache 2.0 license](https://www.apache.org/licenses/LICENSE-2.0). Please see our [code of conduct](https://github.com/turbot/.github/blob/main/CODE_OF_CONDUCT.md). We look forward to collaborating with you!
 
-No additional configuration is required.
+[Flowpipe](https://flowpipe.io) is a product produced from this open source software, exclusively by [Turbot HQ, Inc](https://turbot.com). It is distributed under our commercial terms. Others are allowed to make their own distribution of the software, but cannot use any of the Turbot trademarks, cloud services, etc. You can learn more in our [Open Source FAQ](https://turbot.com/open-source).
 
-## Contributing
+## Get Involved
 
-If you have an idea for additional pipelines or just want to help maintain and extend this mod ([or others](https://github.com/topics/flowpipe-mod)) we would love you to join the community and start contributing.
-
-- **[Join #flowpipe in our Slack community](https://flowpipe.io/community/join)**
-
-Please see the [contribution guidelines](https://github.com/turbot/flowpipe/blob/main/CONTRIBUTING.md) and our [code of conduct](https://github.com/turbot/flowpipe/blob/main/CODE_OF_CONDUCT.md).
+**[Join #flowpipe on Slack →](https://flowpipe.io/community/join)**
 
 Want to help but not sure where to start? Pick up one of the `help wanted` issues:
 
 - [Flowpipe](https://github.com/turbot/flowpipe/labels/help%20wanted)
 - [Pipes Mod](https://github.com/turbot/flowpipe-mod-pipes/labels/help%20wanted)
-
-## License
-
-This mod is licensed under the [Apache License 2.0](https://github.com/turbot/flowpipe-mod-pipes/blob/main/LICENSE).
-
-Flowpipe is licensed under the [AGPLv3](https://github.com/turbot/flowpipe/blob/main/LICENSE).
