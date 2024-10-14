@@ -2,10 +2,10 @@ pipeline "list_organization_members" {
   title       = "List Organization Members"
   description = "List all members of an organization who are invited / accepted."
 
-  param "cred" {
-    type        = string
-    description = local.cred_param_description
-    default     = "default"
+  param "conn" {
+    type        = connection.pipes
+    description = local.conn_param_description
+    default     = connection.pipes.default
   }
 
   param "org_handle" {
@@ -19,7 +19,7 @@ pipeline "list_organization_members" {
 
     request_headers = {
       Content-Type  = "application/json"
-      Authorization = "Bearer ${credential.pipes[param.cred].token}"
+      Authorization = "Bearer ${param.conn.token}"
     }
 
     loop {
