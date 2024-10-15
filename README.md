@@ -101,7 +101,7 @@ flowpipe pipeline run get_user --arg user_handle=turbot
 To use a specific `connection`, specify the `conn` pipeline argument:
 
 ```sh
-flowpipe pipeline run get_user --arg user_handle=turbot --arg conn=pipes_profile
+flowpipe pipeline run get_user --arg user_handle=turbot --arg conn=connection.pipes.my_pipes
 ```
 
 ## Open Source & Contributing
