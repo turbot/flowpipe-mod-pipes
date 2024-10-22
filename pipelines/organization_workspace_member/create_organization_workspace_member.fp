@@ -3,13 +3,13 @@ pipeline "create_organization_workspace_member" {
   description = "Add an individual as a member of a workspace in an organization."
 
   tags = {
-    type = "featured"
+    recommended = "true"
   }
 
-  param "cred" {
-    type        = string
-    description = local.cred_param_description
-    default     = "default"
+  param "conn" {
+    type        = connection.pipes
+    description = local.conn_param_description
+    default     = connection.pipes.default
   }
 
   param "org_handle" {
@@ -38,7 +38,7 @@ pipeline "create_organization_workspace_member" {
 
     request_headers = {
       Content-Type  = "application/json"
-      Authorization = "Bearer ${credential.pipes[param.cred].token}"
+      Authorization = "Bearer ${param.conn.token}"
     }
 
     request_body = jsonencode({

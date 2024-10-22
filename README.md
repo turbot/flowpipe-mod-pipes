@@ -17,25 +17,25 @@ brew tap turbot/tap
 brew install flowpipe
 ```
 
-### Credentials
+### Connections
 
 By default, the following environment variables will be used for authentication:
 
 - `PIPES_TOKEN`
 
-You can also create `credential` resources in configuration files:
+You can also create `connection` resources in configuration files:
 
 ```sh
 vi ~/.flowpipe/config/pipes.fpc
 ```
 
 ```hcl
-credential "pipes" "my_pipes" {
+connection "pipes" "my_pipes" {
   token = "tpt_cld630jSCGU4yre79890csdjch79"
 }
 ```
 
-For more information on credentials in Flowpipe, please see [Managing Credentials](https://flowpipe.io/docs/run/credentials).
+For more information on connections in Flowpipe, please see [Managing commercialonnections](https://flowpipe.io/docs/run/connections).
 
 ### Usage
 
@@ -98,10 +98,10 @@ Run a pipeline:
 flowpipe pipeline run get_user --arg user_handle=turbot
 ```
 
-To use a specific `credential`, specify the `cred` pipeline argument:
+To use a specific `connection`, specify the `conn` pipeline argument:
 
 ```sh
-flowpipe pipeline run get_user --arg user_handle=turbot --arg cred=pipes_profile
+flowpipe pipeline run get_user --arg user_handle=turbot --arg conn=connection.pipes.my_pipes
 ```
 
 ## Open Source & Contributing
