@@ -3,13 +3,13 @@ pipeline "delete_organization_member" {
   description = "Delete the user from the organization."
 
   tags = {
-    type = "featured"
+    recommended = "true"
   }
 
-  param "cred" {
-    type        = string
-    description = local.cred_param_description
-    default     = "default"
+  param "conn" {
+    type        = connection.pipes
+    description = local.conn_param_description
+    default     = connection.pipes.default
   }
 
   param "org_handle" {
@@ -28,7 +28,7 @@ pipeline "delete_organization_member" {
 
     request_headers = {
       Content-Type  = "application/json"
-      Authorization = "Bearer ${credential.pipes[param.cred].token}"
+      Authorization = "Bearer ${param.conn.token}"
     }
   }
 

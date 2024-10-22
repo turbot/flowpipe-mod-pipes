@@ -2,10 +2,10 @@ pipeline "delete_organization_workspace" {
   title       = "Delete Organization Workspace"
   description = "Deletes the workspace specified in the request."
 
-  param "cred" {
-    type        = string
-    description = local.cred_param_description
-    default     = "default"
+  param "conn" {
+    type        = connection.pipes
+    description = local.conn_param_description
+    default     = connection.pipes.default
   }
 
   param "org_handle" {
@@ -24,7 +24,7 @@ pipeline "delete_organization_workspace" {
 
     request_headers = {
       Content-Type  = "application/json"
-      Authorization = "Bearer ${credential.pipes[param.cred].token}"
+      Authorization = "Bearer ${param.conn.token}"
     }
   }
 

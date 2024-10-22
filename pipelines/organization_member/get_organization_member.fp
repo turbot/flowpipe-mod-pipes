@@ -2,10 +2,10 @@ pipeline "get_organization_member" {
   title       = "Get Organization Member"
   description = "Retrieves information of the specified user in organization."
 
-  param "cred" {
-    type        = string
-    description = local.cred_param_description
-    default     = "default"
+  param "conn" {
+    type        = connection.pipes
+    description = local.conn_param_description
+    default     = connection.pipes.default
   }
 
   param "user_handle" {
@@ -24,7 +24,7 @@ pipeline "get_organization_member" {
 
     request_headers = {
       Content-Type  = "application/json"
-      Authorization = "Bearer ${credential.pipes[param.cred].token}"
+      Authorization = "Bearer ${param.conn.token}"
     }
   }
 

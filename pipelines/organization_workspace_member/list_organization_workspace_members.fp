@@ -2,10 +2,10 @@ pipeline "list_organization_workspace_members" {
   title       = "List Organization Workspace Members"
   description = "List all members of a workspace in an organization who has accepted / invited."
 
-  param "cred" {
-    type        = string
-    description = local.cred_param_description
-    default     = "default"
+  param "conn" {
+    type        = connection.pipes
+    description = local.conn_param_description
+    default     = connection.pipes.default
   }
 
   param "org_handle" {
@@ -24,7 +24,7 @@ pipeline "list_organization_workspace_members" {
 
     request_headers = {
       Content-Type  = "application/json"
-      Authorization = "Bearer ${credential.pipes[param.cred].token}"
+      Authorization = "Bearer ${param.conn.token}"
     }
 
     request_body = jsonencode({
