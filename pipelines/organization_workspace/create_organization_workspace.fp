@@ -3,7 +3,7 @@ pipeline "create_organization_workspace" {
   description = "Creates a new workspace for an organization."
 
   tags = {
-    type = "featured"
+    recommended = "true"
   }
 
   param "conn" {

@@ -3,7 +3,7 @@ pipeline "create_organization_workspace_member" {
   description = "Add an individual as a member of a workspace in an organization."
 
   tags = {
-    type = "featured"
+    recommended = "true"
   }
 
   param "conn" {

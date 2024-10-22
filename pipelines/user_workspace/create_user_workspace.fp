@@ -3,7 +3,7 @@ pipeline "create_user_workspace" {
   description = "Creates a new workspace for a user."
 
   tags = {
-    type = "featured"
+    recommended = "true"
   }
 
   param "conn" {

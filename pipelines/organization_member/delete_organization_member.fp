@@ -3,7 +3,7 @@ pipeline "delete_organization_member" {
   description = "Delete the user from the organization."
 
   tags = {
-    type = "featured"
+    recommended = "true"
   }
 
   param "conn" {
