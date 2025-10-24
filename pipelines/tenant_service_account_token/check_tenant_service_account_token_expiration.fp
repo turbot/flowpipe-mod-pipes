@@ -1,5 +1,5 @@
-pipeline "notify_tenant_service_account_expiring_tokens" {
-  title       = "Notify All Expiring Service Account Tokens in Tenant"
+pipeline "check_tenant_service_account_token_expiration" {
+  title       = "Check Tenant Service Account Token Expiration"
   description = "Check for expiring service account tokens across all service accounts in a tenant and send notifications."
 
   param "conn" {
@@ -219,6 +219,28 @@ EOF
     }
   }
 
+  # Build HTML for expiring tokens section
+  step "transform" "html_expiring_tokens" {
+    value = (length(step.transform.all_tokens_flat.value.expiring_tokens) > 0) ? (
+      "<div class=\"section expiring\"><div class=\"section-title\">⚠️  EXPIRING TOKENS (within ${param.days_ahead} days)</div>" +
+      join("", [for token_idx, token_data in step.transform.all_tokens_flat.value.expiring_tokens :
+        "<div class=\"token-entry\"><span class=\"token-number\">${token_idx + 1}️⃣</span> <strong>${token_data.service_account_name}</strong><div class=\"token-field\"><span class=\"label\">Token Name:</span> ${token_data.token.token_name}</div><div class=\"token-field\"><span class=\"label\">Token Status:</span> ${token_data.token.status}</div><div class=\"token-field\"><span class=\"label\">Expires On:</span> ${token_data.token.expires_at}</div><div class=\"token-field\"><span class=\"label\">Last 4:</span> ${token_data.token.last4}</div><div class=\"token-field\"><span class=\"label\">Token ID:</span> ${token_data.token.token_id}</div></div>"
+      ]) +
+      "</div>"
+    ) : ""
+  }
+
+  # Build HTML for expired tokens section
+  step "transform" "html_expired_tokens" {
+    value = (length(step.transform.all_tokens_flat.value.expired_tokens) > 0) ? (
+      "<div class=\"section expired\"><div class=\"section-title\">🚨  EXPIRED TOKENS</div>" +
+      join("", [for token_idx, token_data in step.transform.all_tokens_flat.value.expired_tokens :
+        "<div class=\"token-entry\"><span class=\"token-number\">${token_idx + 1}️⃣</span> <strong>${token_data.service_account_name}</strong><div class=\"token-field\"><span class=\"label\">Token Name:</span> ${token_data.token.token_name}</div><div class=\"token-field\"><span class=\"label\">Token Status:</span> ${token_data.token.status}</div><div class=\"token-field\"><span class=\"label\">Expired On:</span> ${token_data.token.expires_at}</div><div class=\"token-field\"><span class=\"label\">Last 4:</span> ${token_data.token.last4}</div><div class=\"token-field\"><span class=\"label\">Token ID:</span> ${token_data.token.token_id}</div></div>"
+      ]) +
+      "</div>"
+    ) : ""
+  }
+
   # Create HTML-formatted version for email rendering
   step "transform" "html_report" {
     value = {
@@ -262,21 +284,9 @@ EOF
       <div class="stat-line"><strong>Token Expiration:</strong> Expiring (next ${param.days_ahead} days): ${step.transform.summary_report.value.total_expiring}, Expired: ${step.transform.summary_report.value.total_expired}</div>
     </div>
 
-    ${(length(step.transform.all_tokens_flat.value.expiring_tokens) > 0 ?
-      ("<div class=\"section expiring\"><div class=\"section-title\">⚠️  EXPIRING TOKENS (within ${param.days_ahead} days)</div>" +
-        join("", [for token_idx, token_data in step.transform.all_tokens_flat.value.expiring_tokens :
-          "<div class=\"token-entry\"><span class=\"token-number\">${token_idx + 1}️⃣</span> <strong>${token_data.service_account_name}</strong><div class=\"token-field\"><span class=\"label\">Token Name:</span> ${token_data.token.token_name}</div><div class=\"token-field\"><span class=\"label\">Token Status:</span> ${token_data.token.status}</div><div class=\"token-field\"><span class=\"label\">Expires On:</span> ${token_data.token.expires_at}</div><div class=\"token-field\"><span class=\"label\">Last 4:</span> ${token_data.token.last4}</div><div class=\"token-field\"><span class=\"label\">Token ID:</span> ${token_data.token.token_id}</div></div>"
-        ]) +
-      "</div>")
-      : "")}
+    ${step.transform.html_expiring_tokens.value}
 
-    ${(length(step.transform.all_tokens_flat.value.expired_tokens) > 0 ?
-      ("<div class=\"section expired\"><div class=\"section-title\">🚨  EXPIRED TOKENS</div>" +
-        join("", [for token_idx, token_data in step.transform.all_tokens_flat.value.expired_tokens :
-          "<div class=\"token-entry\"><span class=\"token-number\">${token_idx + 1}️⃣</span> <strong>${token_data.service_account_name}</strong><div class=\"token-field\"><span class=\"label\">Token Name:</span> ${token_data.token.token_name}</div><div class=\"token-field\"><span class=\"label\">Token Status:</span> ${token_data.token.status}</div><div class=\"token-field\"><span class=\"label\">Expired On:</span> ${token_data.token.expires_at}</div><div class=\"token-field\"><span class=\"label\">Last 4:</span> ${token_data.token.last4}</div><div class=\"token-field\"><span class=\"label\">Token ID:</span> ${token_data.token.token_id}</div></div>"
-        ]) +
-      "</div>")
-  : "")}
+    ${step.transform.html_expired_tokens.value}
 
     <div class="footer">
       <p>This is an automated notification from Tenant Service Account Token Monitoring</p>
@@ -285,50 +295,50 @@ EOF
 </body>
 </html>
 EOT
-}
-}
-
-# Determine notification content based on integrations in the notifier
-step "transform" "select_notification_content" {
-  value = {
-    # Check if notifier has email integration
-    has_email = try(length([
-      for integration in param.notifier.notifies :
-      integration
-      if lookup(integration, "integration", {})["type"] == "email"
-    ]) > 0, false)
-    # Select content: HTML for email, plain text otherwise
-    content = try(length([
-      for integration in param.notifier.notifies :
-      integration
-      if lookup(integration, "integration", {})["type"] == "email"
-    ]) > 0, false) ? step.transform.html_report.value.html_content : step.transform.full_report.value.combined
+    }
   }
-}
 
-# Send notification if notifier is configured and there are tokens requiring attention
-step "message" "notify_token_issues" {
-  if       = param.notifier != null && step.transform.summary_report.value.has_issues
-  notifier = param.notifier
-  text     = step.transform.select_notification_content.value.content
-}
-
-output "formatted_summary" {
-  description = "Formatted summary for display - sent to all notification channels"
-  value       = step.transform.full_report.value.combined
-}
-
-output "notification_status" {
-  description = "Notification delivery status"
-  value = param.notifier != null ? {
-    notifier_configured        = true
-    notification_sent          = !is_error(step.message.notify_token_issues)
-    tokens_requiring_attention = step.transform.summary_report.value.has_issues
-    error_message              = is_error(step.message.notify_token_issues) ? error_message(step.message.notify_token_issues) : null
-    } : {
-    notifier_configured        = false
-    tokens_requiring_attention = step.transform.summary_report.value.has_issues
+  # Determine notification content based on integrations in the notifier
+  step "transform" "select_notification_content" {
+    value = {
+      # Check if notifier has email integration
+      has_email = try(length([
+        for integration in param.notifier.notifies :
+        integration
+        if lookup(integration, "integration", {})["type"] == "email"
+      ]) > 0, false)
+      # Select content: HTML for email, plain text otherwise
+      content = try(length([
+        for integration in param.notifier.notifies :
+        integration
+        if lookup(integration, "integration", {})["type"] == "email"
+      ]) > 0, false) ? step.transform.html_report.value.html_content : step.transform.full_report.value.combined
+    }
   }
-}
+
+  # Send notification if notifier is configured and there are tokens requiring attention
+  step "message" "notify_token_issues" {
+    if       = param.notifier != null && step.transform.summary_report.value.has_issues
+    notifier = param.notifier
+    text     = step.transform.select_notification_content.value.content
+  }
+
+  output "formatted_summary" {
+    description = "Formatted summary for display - sent to all notification channels"
+    value       = step.transform.full_report.value.combined
+  }
+
+  output "notification_status" {
+    description = "Notification delivery status"
+    value = param.notifier != null ? {
+      notifier_configured        = true
+      notification_sent          = !is_error(step.message.notify_token_issues)
+      tokens_requiring_attention = step.transform.summary_report.value.has_issues
+      error_message              = is_error(step.message.notify_token_issues) ? error_message(step.message.notify_token_issues) : null
+      } : {
+      notifier_configured        = false
+      tokens_requiring_attention = step.transform.summary_report.value.has_issues
+    }
+  }
 }
 
