@@ -221,24 +221,24 @@ EOF
 
   # Build HTML for expiring tokens section
   step "transform" "html_expiring_tokens" {
-    value = (length(step.transform.all_tokens_flat.value.expiring_tokens) > 0) ? concat(
+    value = (length(step.transform.all_tokens_flat.value.expiring_tokens) > 0) ? join("", [
       "<div class=\"section expiring\"><div class=\"section-title\">⚠️  EXPIRING TOKENS (within ${param.days_ahead} days)</div>",
       join("", [for token_idx, token_data in step.transform.all_tokens_flat.value.expiring_tokens :
         "<div class=\"token-entry\"><span class=\"token-number\">${token_idx + 1}️⃣</span> <strong>${token_data.service_account_name}</strong><div class=\"token-field\"><span class=\"label\">Token Name:</span> ${token_data.token.token_name}</div><div class=\"token-field\"><span class=\"label\">Token Status:</span> ${token_data.token.status}</div><div class=\"token-field\"><span class=\"label\">Expires On:</span> ${token_data.token.expires_at}</div><div class=\"token-field\"><span class=\"label\">Last 4:</span> ${token_data.token.last4}</div><div class=\"token-field\"><span class=\"label\">Token ID:</span> ${token_data.token.token_id}</div></div>"
       ]),
       "</div>"
-    ) : ""
+    ]) : ""
   }
 
   # Build HTML for expired tokens section
   step "transform" "html_expired_tokens" {
-    value = (length(step.transform.all_tokens_flat.value.expired_tokens) > 0) ? concat(
+    value = (length(step.transform.all_tokens_flat.value.expired_tokens) > 0) ? join("", [
       "<div class=\"section expired\"><div class=\"section-title\">🚨  EXPIRED TOKENS</div>",
       join("", [for token_idx, token_data in step.transform.all_tokens_flat.value.expired_tokens :
         "<div class=\"token-entry\"><span class=\"token-number\">${token_idx + 1}️⃣</span> <strong>${token_data.service_account_name}</strong><div class=\"token-field\"><span class=\"label\">Token Name:</span> ${token_data.token.token_name}</div><div class=\"token-field\"><span class=\"label\">Token Status:</span> ${token_data.token.status}</div><div class=\"token-field\"><span class=\"label\">Expired On:</span> ${token_data.token.expires_at}</div><div class=\"token-field\"><span class=\"label\">Last 4:</span> ${token_data.token.last4}</div><div class=\"token-field\"><span class=\"label\">Token ID:</span> ${token_data.token.token_id}</div></div>"
       ]),
       "</div>"
-    ) : ""
+    ]) : ""
   }
 
   # Create HTML-formatted version for email rendering

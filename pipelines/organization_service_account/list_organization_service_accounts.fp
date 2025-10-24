@@ -15,7 +15,7 @@ pipeline "list_organization_service_accounts" {
 
   step "http" "list_organization_service_accounts" {
     method = "get"
-    url    = "https://pipes.turbot.com/api/latest/org/${param.org_handle}/service_account?limit=1"
+    url    = "https://pipes.turbot.com/api/latest/org/${param.org_handle}/service_account?limit=20"
 
     request_headers = {
       Content-Type  = "application/json"

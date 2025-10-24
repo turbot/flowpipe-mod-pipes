@@ -15,7 +15,7 @@ pipeline "list_tenant_service_accounts" {
 
   step "http" "list_tenant_service_accounts" {
     method = "get"
-    url    = "https://${param.tenant_id}.pipes.turbot.com/api/latest/service_account?limit=1"
+    url    = "https://${param.tenant_id}.pipes.turbot.com/api/latest/service_account?limit=20"
 
     request_headers = {
       Content-Type  = "application/json"
