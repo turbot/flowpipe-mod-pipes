@@ -215,7 +215,12 @@ EOF
       summary        = step.transform.summary_text_builder.value
       expiring_table = step.transform.format_report.value.expiring_report
       expired_table  = step.transform.format_report.value.expired_report
-      combined       = "\n${step.transform.summary_text_builder.value}${step.transform.format_report.value.expiring_report}${step.transform.format_report.value.expired_report}\n==============================================================="
+      combined       = <<-REPORT
+${step.transform.summary_text_builder.value}
+${step.transform.format_report.value.expiring_report}
+${step.transform.format_report.value.expired_report}
+===============================================================
+REPORT
     }
   }
 
