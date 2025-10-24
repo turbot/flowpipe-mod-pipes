@@ -169,8 +169,8 @@ pipeline "notify_tenant_service_account_expiring_tokens" {
         for token_idx, token_data in step.transform.all_tokens_flat.value.expired_tokens :
         "${token_idx + 1}️⃣  Service Account: ${token_data.service_account_name}\n   Token Name: ${token_data.token.token_name}\n   Token Status: ${token_data.token.status}\n   Expired On: ${token_data.token.expires_at}\n   Last 4: ${token_data.token.last4}\n   Token ID: ${token_data.token.token_id}"
       ]
-      expiring_report = length(step.transform.all_tokens_flat.value.expiring_tokens) > 0 ? "\n⚠️  EXPIRING TOKENS (within ${param.days_ahead} days)\n─────────────────────────────────\n${join("\n\n", [for token_idx, token_data in step.transform.all_tokens_flat.value.expiring_tokens : "${token_idx + 1}️⃣  Service Account: ${token_data.service_account_name}\n   Token Name: ${token_data.token.token_name}\n   Token Status: ${token_data.token.status}\n   Expires On: ${token_data.token.expires_at}\n   Last 4: ${token_data.token.last4}\n   Token ID: ${token_data.token.token_id}"])}\n" : ""
-      expired_report  = length(step.transform.all_tokens_flat.value.expired_tokens) > 0 ? "\n🚨  EXPIRED TOKENS\n─────────────────────────────────\n${join("\n\n", [for token_idx, token_data in step.transform.all_tokens_flat.value.expired_tokens : "${token_idx + 1}️⃣  Service Account: ${token_data.service_account_name}\n   Token Name: ${token_data.token.token_name}\n   Token Status: ${token_data.token.status}\n   Expired On: ${token_data.token.expires_at}\n   Last 4: ${token_data.token.last4}\n   Token ID: ${token_data.token.token_id}"])}\n" : ""
+      expiring_report = length(step.transform.all_tokens_flat.value.expiring_tokens) > 0 ? "\n\n⚠️  EXPIRING TOKENS (within ${param.days_ahead} days)\n─────────────────────────────────\n\n${join("\n\n", [for token_idx, token_data in step.transform.all_tokens_flat.value.expiring_tokens : "${token_idx + 1}️⃣  Service Account: ${token_data.service_account_name}\n   Token Name: ${token_data.token.token_name}\n   Token Status: ${token_data.token.status}\n   Expires On: ${token_data.token.expires_at}\n   Last 4: ${token_data.token.last4}\n   Token ID: ${token_data.token.token_id}"])}\n\n" : ""
+      expired_report  = length(step.transform.all_tokens_flat.value.expired_tokens) > 0 ? "\n\n🚨  EXPIRED TOKENS\n─────────────────────────────────\n\n${join("\n\n", [for token_idx, token_data in step.transform.all_tokens_flat.value.expired_tokens : "${token_idx + 1}️⃣  Service Account: ${token_data.service_account_name}\n   Token Name: ${token_data.token.token_name}\n   Token Status: ${token_data.token.status}\n   Expired On: ${token_data.token.expires_at}\n   Last 4: ${token_data.token.last4}\n   Token ID: ${token_data.token.token_id}"])}\n\n" : ""
     }
   }
 
@@ -190,7 +190,24 @@ pipeline "notify_tenant_service_account_expiring_tokens" {
   }
 
   step "transform" "summary_text_builder" {
-    value = "========== Tenant Service Account Token Status Report ==========\n\nTenant ID: ${param.tenant_id}\nCheck Time: ${step.transform.summary_report.value.check_time}\nExpiry Watch Window: ${param.days_ahead} Days\n\n📊 OVERVIEW\n─────────────────────────────────\nService Accounts: Total: ${step.transform.summary_report.value.total_accounts}, With Expiring Tokens: ${step.transform.summary_report.value.total_issues}\nToken Status: Total: ${step.transform.summary_report.value.total_tokens}, Active: ${step.transform.summary_report.value.total_active}, Inactive: ${step.transform.summary_report.value.total_inactive}\nToken Expiration: Expiring (next ${param.days_ahead} days): ${step.transform.summary_report.value.total_expiring}, Expired: ${step.transform.summary_report.value.total_expired}\n"
+    value = <<-EOF
+========== Tenant Service Account Token Status Report ==========
+
+Tenant ID: ${param.tenant_id}
+Check Time: ${step.transform.summary_report.value.check_time}
+Expiry Watch Window: ${param.days_ahead} Days
+
+
+📊 OVERVIEW
+─────────────────────────────────
+
+Service Accounts: Total: ${step.transform.summary_report.value.total_accounts}, With Expiring Tokens: ${step.transform.summary_report.value.total_issues}
+
+Token Status: Total: ${step.transform.summary_report.value.total_tokens}, Active: ${step.transform.summary_report.value.total_active}, Inactive: ${step.transform.summary_report.value.total_inactive}
+
+Token Expiration: Expiring (next ${param.days_ahead} days): ${step.transform.summary_report.value.total_expiring}, Expired: ${step.transform.summary_report.value.total_expired}
+
+EOF
   }
 
   step "transform" "full_report" {
@@ -202,7 +219,7 @@ pipeline "notify_tenant_service_account_expiring_tokens" {
     }
   }
 
-  # Send notification if notifier is configured and there are tokens requiring attention
+  ##   Send notification if notifier is configured and there are tokens requiring attention
   step "message" "notify_token_issues" {
     if       = param.notifier != null && step.transform.summary_report.value.has_issues
     notifier = param.notifier
@@ -229,7 +246,7 @@ pipeline "notify_tenant_service_account_expiring_tokens" {
 
 
   # #####
-  # # Slack-specific parameters
+  # #  Slack-specific parameters
   # param "slack_cred" {
   #   type        = string
   #   description = "Name for Slack credentials to use. Required when 'slack' is in notification_channels."
