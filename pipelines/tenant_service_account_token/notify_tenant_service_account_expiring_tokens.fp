@@ -19,22 +19,9 @@ pipeline "notify_tenant_service_account_expiring_tokens" {
     default     = 30
   }
 
-  param "notification_channels" {
-    type        = list(string)
-    description = "List of notification channels to use (e.g., ['slack'). Default is empty (no notifications)."
-    default     = []
-  }
-
-  param "slack_channel" {
-    type        = string
-    description = "Slack channel to send notifications to (e.g., #security-alerts). Required if slack is in notification_channels."
-    default     = ""
-  }
-
-  param "slack_cred" {
-    type        = string
-    description = "Name of Slack credentials to use. Defaults to 'default' if not specified."
-    default     = "default"
+  param "notifier" {
+    type        = notifier
+    description = "Notifier to use for sending token expiration alerts."
   }
 
   step "pipeline" "list_service_accounts" {
@@ -207,7 +194,6 @@ pipeline "notify_tenant_service_account_expiring_tokens" {
   }
 
   step "transform" "full_report" {
-    notifier = notifier["slack-admins"]
     value = {
       summary        = step.transform.summary_text_builder.value
       expiring_table = step.transform.format_report.value.expiring_report
@@ -216,52 +202,30 @@ pipeline "notify_tenant_service_account_expiring_tokens" {
     }
   }
 
-  # Format Slack message for notifications
-  step "transform" "slack_message" {
-    value = contains(param.notification_channels, "slack") ? {
-      channel = param.slack_channel
-      text    = step.transform.full_report.value.combined
-    } : null
+  # Send notification if notifier is configured and there are tokens requiring attention
+  step "message" "notify_token_issues" {
+    if       = param.notifier != null && step.transform.summary_report.value.has_issues
+    notifier = param.notifier
+    text     = step.transform.full_report.value.combined
   }
-
-  # Send Slack notification if enabled and there are issues
-  step "pipeline" "send_slack_notification" {
-    pipeline = slack.pipeline.post_message
-    args = {
-      channel = step.transform.slack_message.value.channel
-      text    = step.transform.slack_message.value.text
-    }
-    # Only run if Slack is enabled and there are issues
-    if = contains(param.notification_channels, "slack") && step.transform.summary_report.value.has_issues
-  }
-
-  # output "report_summary" {
-  #   description = "Summary of token expiration status"
-  #   value = {
-  #     summary               = step.transform.full_report.value.combined
-  #     has_issues            = step.transform.summary_report.value.has_issues
-  #     total_expiring        = step.transform.summary_report.value.total_expiring
-  #     total_expired         = step.transform.summary_report.value.total_expired
-  #     notification_channels = param.notification_channels
-  #   }
-  # }
 
   output "formatted_summary" {
     description = "Formatted summary for display (with proper line breaks)"
     value       = step.transform.full_report.value.combined
   }
 
-  output "notification_status" {
-    description = "Notification status (only present when notification channels are selected)"
-    value = length(param.notification_channels) > 0 ? {
-      slack_enabled              = contains(param.notification_channels, "slack")
-      slack_notification_sent    = contains(param.notification_channels, "slack") && step.transform.summary_report.value.has_issues ? !is_error(step.pipeline.send_slack_notification) : false
-      slack_error                = contains(param.notification_channels, "slack") && step.transform.summary_report.value.has_issues && is_error(step.pipeline.send_slack_notification) ? error_message(step.pipeline.send_slack_notification) : null
-      tokens_requiring_attention = step.transform.summary_report.value.has_issues
-    } : null
-  }
-
-
+  # output "notification_status" {
+  #   description = "Notification delivery status"
+  #   value = param.notifier != null ? {
+  #     notifier_configured        = true
+  #     notification_sent          = !is_error(step.message.notify_token_issues)
+  #     tokens_requiring_attention = step.transform.summary_report.value.has_issues
+  #     error_message              = is_error(step.message.notify_token_issues) ? error_message(step.message.notify_token_issues) : null
+  #     } : {
+  #     notifier_configured        = false
+  #     tokens_requiring_attention = step.transform.summary_report.value.has_issues
+  #   }
+  # }
 
 }
 
