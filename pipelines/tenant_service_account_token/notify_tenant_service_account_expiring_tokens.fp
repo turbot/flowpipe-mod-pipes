@@ -207,6 +207,7 @@ pipeline "notify_tenant_service_account_expiring_tokens" {
   }
 
   step "transform" "full_report" {
+    notifier = notifier["slack-admins"]
     value = {
       summary        = step.transform.summary_text_builder.value
       expiring_table = step.transform.format_report.value.expiring_report
@@ -260,4 +261,7 @@ pipeline "notify_tenant_service_account_expiring_tokens" {
     } : null
   }
 
+
+
 }
+
