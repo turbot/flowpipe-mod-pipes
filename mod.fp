@@ -16,5 +16,8 @@ mod "pipes" {
     flowpipe {
       min_version = "1.0.0"
     }
+    mod "github.com/turbot/flowpipe-mod-slack" {
+      version = "^1"
+    }
   }
 }
