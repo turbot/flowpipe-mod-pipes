@@ -307,12 +307,9 @@ EOT
         integration
         if lookup(integration, "integration", {})["type"] == "email"
       ]) > 0, false)
-      # Select content: HTML for email, plain text otherwise
-      content = try(length([
-        for integration in param.notifier.notifies :
-        integration
-        if lookup(integration, "integration", {})["type"] == "email"
-      ]) > 0, false) ? step.transform.html_report.value.html_content : step.transform.full_report.value.combined
+      # Always send plain text to notifier (Slack cannot render HTML)
+      # Email will receive plain text through the notifier backend
+      content = step.transform.full_report.value.combined
     }
   }
 
