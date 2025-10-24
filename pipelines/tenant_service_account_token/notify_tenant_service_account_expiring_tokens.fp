@@ -19,6 +19,24 @@ pipeline "notify_tenant_service_account_expiring_tokens" {
     default     = 30
   }
 
+  param "notification_channels" {
+    type        = list(string)
+    description = "List of notification channels to use (e.g., ['slack'). Default is empty (no notifications)."
+    default     = []
+  }
+
+  param "slack_channel" {
+    type        = string
+    description = "Slack channel to send notifications to (e.g., #security-alerts). Required if slack is in notification_channels."
+    default     = ""
+  }
+
+  param "slack_cred" {
+    type        = string
+    description = "Name of Slack credentials to use. Defaults to 'default' if not specified."
+    default     = "default"
+  }
+
   step "pipeline" "list_service_accounts" {
     pipeline = pipeline.list_tenant_service_accounts
     args = {
@@ -197,6 +215,25 @@ pipeline "notify_tenant_service_account_expiring_tokens" {
     }
   }
 
+  # Format Slack message for notifications
+  step "transform" "slack_message" {
+    value = contains(param.notification_channels, "slack") ? {
+      channel = param.slack_channel
+      text    = step.transform.full_report.value.combined
+    } : null
+  }
+
+  # Send Slack notification if enabled and there are issues
+  step "pipeline" "send_slack_notification" {
+    pipeline = slack.pipeline.post_message
+    args = {
+      channel = step.transform.slack_message.value.channel
+      text    = step.transform.slack_message.value.text
+    }
+    # Only run if Slack is enabled and there are issues
+    if = contains(param.notification_channels, "slack") && step.transform.summary_report.value.has_issues
+  }
+
   # output "report_summary" {
   #   description = "Summary of token expiration status"
   #   value = {
@@ -213,16 +250,14 @@ pipeline "notify_tenant_service_account_expiring_tokens" {
     value       = step.transform.full_report.value.combined
   }
 
-  # output "notification_status" {
-  #   description = "Notification status and messages (only present when notification channels are selected)"
-  #   value = length(param.notification_channels) > 0 ? {
-  #     slack_notification_sent = contains(param.notification_channels, "slack") && step.transform.summary_report.value.has_issues ? !is_error(step.pipeline.send_slack_notification) : false
-  #     teams_notification_sent = contains(param.notification_channels, "teams") && step.transform.summary_report.value.has_issues ? !is_error(step.http.send_teams_notification) : false
-  #     email_notification_sent = contains(param.notification_channels, "email") && step.transform.summary_report.value.has_issues ? !is_error(step.http.send_email_notification) : false
-  #     slack_message           = contains(param.notification_channels, "slack") ? step.transform.slack_message.value : null
-  #     teams_message           = contains(param.notification_channels, "teams") ? step.transform.teams_message.value : null
-  #     email_message           = contains(param.notification_channels, "email") ? step.transform.email_message.value : null
-  #   } : null
-  # }
+  output "notification_status" {
+    description = "Notification status (only present when notification channels are selected)"
+    value = length(param.notification_channels) > 0 ? {
+      slack_enabled              = contains(param.notification_channels, "slack")
+      slack_notification_sent    = contains(param.notification_channels, "slack") && step.transform.summary_report.value.has_issues ? !is_error(step.pipeline.send_slack_notification) : false
+      slack_error                = contains(param.notification_channels, "slack") && step.transform.summary_report.value.has_issues && is_error(step.pipeline.send_slack_notification) ? error_message(step.pipeline.send_slack_notification) : null
+      tokens_requiring_attention = step.transform.summary_report.value.has_issues
+    } : null
+  }
 
 }
