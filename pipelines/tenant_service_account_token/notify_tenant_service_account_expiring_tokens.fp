@@ -262,21 +262,21 @@ EOF
       <div class="stat-line"><strong>Token Expiration:</strong> Expiring (next ${param.days_ahead} days): ${step.transform.summary_report.value.total_expiring}, Expired: ${step.transform.summary_report.value.total_expired}</div>
     </div>
 
-    ${length(step.transform.all_tokens_flat.value.expiring_tokens) > 0 ?
-      "<div class=\"section expiring\"><div class=\"section-title\">⚠️  EXPIRING TOKENS (within ${param.days_ahead} days)</div>" +
-      join("", [for token_idx, token_data in step.transform.all_tokens_flat.value.expiring_tokens :
-        "<div class=\"token-entry\"><span class=\"token-number\">${token_idx + 1}️⃣</span> <strong>${token_data.service_account_name}</strong><div class=\"token-field\"><span class=\"label\">Token Name:</span> ${token_data.token.token_name}</div><div class=\"token-field\"><span class=\"label\">Token Status:</span> ${token_data.token.status}</div><div class=\"token-field\"><span class=\"label\">Expires On:</span> ${token_data.token.expires_at}</div><div class=\"token-field\"><span class=\"label\">Last 4:</span> ${token_data.token.last4}</div><div class=\"token-field\"><span class=\"label\">Token ID:</span> ${token_data.token.token_id}</div></div>"
-      ]) +
-      "</div>"
-      : ""}
+    ${(length(step.transform.all_tokens_flat.value.expiring_tokens) > 0 ?
+      ("<div class=\"section expiring\"><div class=\"section-title\">⚠️  EXPIRING TOKENS (within ${param.days_ahead} days)</div>" +
+        join("", [for token_idx, token_data in step.transform.all_tokens_flat.value.expiring_tokens :
+          "<div class=\"token-entry\"><span class=\"token-number\">${token_idx + 1}️⃣</span> <strong>${token_data.service_account_name}</strong><div class=\"token-field\"><span class=\"label\">Token Name:</span> ${token_data.token.token_name}</div><div class=\"token-field\"><span class=\"label\">Token Status:</span> ${token_data.token.status}</div><div class=\"token-field\"><span class=\"label\">Expires On:</span> ${token_data.token.expires_at}</div><div class=\"token-field\"><span class=\"label\">Last 4:</span> ${token_data.token.last4}</div><div class=\"token-field\"><span class=\"label\">Token ID:</span> ${token_data.token.token_id}</div></div>"
+        ]) +
+      "</div>")
+      : "")}
 
-    ${length(step.transform.all_tokens_flat.value.expired_tokens) > 0 ?
-      "<div class=\"section expired\"><div class=\"section-title\">🚨  EXPIRED TOKENS</div>" +
-      join("", [for token_idx, token_data in step.transform.all_tokens_flat.value.expired_tokens :
-        "<div class=\"token-entry\"><span class=\"token-number\">${token_idx + 1}️⃣</span> <strong>${token_data.service_account_name}</strong><div class=\"token-field\"><span class=\"label\">Token Name:</span> ${token_data.token.token_name}</div><div class=\"token-field\"><span class=\"label\">Token Status:</span> ${token_data.token.status}</div><div class=\"token-field\"><span class=\"label\">Expired On:</span> ${token_data.token.expires_at}</div><div class=\"token-field\"><span class=\"label\">Last 4:</span> ${token_data.token.last4}</div><div class=\"token-field\"><span class=\"label\">Token ID:</span> ${token_data.token.token_id}</div></div>"
-      ]) +
-      "</div>"
-    : ""}
+    ${(length(step.transform.all_tokens_flat.value.expired_tokens) > 0 ?
+      ("<div class=\"section expired\"><div class=\"section-title\">🚨  EXPIRED TOKENS</div>" +
+        join("", [for token_idx, token_data in step.transform.all_tokens_flat.value.expired_tokens :
+          "<div class=\"token-entry\"><span class=\"token-number\">${token_idx + 1}️⃣</span> <strong>${token_data.service_account_name}</strong><div class=\"token-field\"><span class=\"label\">Token Name:</span> ${token_data.token.token_name}</div><div class=\"token-field\"><span class=\"label\">Token Status:</span> ${token_data.token.status}</div><div class=\"token-field\"><span class=\"label\">Expired On:</span> ${token_data.token.expires_at}</div><div class=\"token-field\"><span class=\"label\">Last 4:</span> ${token_data.token.last4}</div><div class=\"token-field\"><span class=\"label\">Token ID:</span> ${token_data.token.token_id}</div></div>"
+        ]) +
+      "</div>")
+  : "")}
 
     <div class="footer">
       <p>This is an automated notification from Tenant Service Account Token Monitoring</p>
@@ -285,7 +285,7 @@ EOF
 </body>
 </html>
 EOT
-  }
+}
 }
 
 # Determine notification content based on integrations in the notifier
