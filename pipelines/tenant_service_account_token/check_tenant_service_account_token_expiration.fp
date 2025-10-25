@@ -25,6 +25,15 @@ pipeline "check_tenant_service_account_token_expiration" {
     optional    = true
   }
 
+  # Debug: Check notifier structure
+  step "transform" "debug_notifier_structure" {
+    value = {
+      full_notifier     = jsonencode(param.notifier)
+      notifies_array    = jsonencode(param.notifier.notifies)
+      integration_types = jsonencode([for integration in param.notifier.notifies : integration.integration.type])
+    }
+  }
+
   step "pipeline" "list_service_accounts" {
     pipeline = pipeline.list_tenant_service_accounts
     args = {
@@ -186,8 +195,11 @@ pipeline "check_tenant_service_account_token_expiration" {
   step "transform" "summary_text_builder" {
     value = <<-EOF
 Tenant Service Account Token Status Report:
+
 Tenant ID: ${param.tenant_id}
+
 Check Time: ${step.transform.summary_report.value.check_time}
+
 Expiry Watch Window: ${param.days_ahead} Days
 
 Overview:
@@ -210,10 +222,57 @@ REPORT
     }
   }
 
+  # Check if notifier has email integration
+  step "transform" "check_email_integration" {
+    value = {
+      has_email = try(length([
+        for integration in param.notifier.notifies :
+        integration
+        if integration.integration.type == "email"
+      ]) > 0, false)
+    }
+  }
+
+  # Debug: Check email integration result
+  step "transform" "debug_email_check" {
+    value = {
+      has_email           = step.transform.check_email_integration.value.has_email
+      email_check_details = "Has email integration: ${step.transform.check_email_integration.value.has_email}"
+    }
+  }
+
+  # Create email-specific content (with better formatting)
+  step "transform" "email_content" {
+    value = {
+      content = <<-EMAIL
+TENANT SERVICE ACCOUNT TOKEN STATUS REPORT
+
+Tenant ID: ${param.tenant_id}
+Check Time: ${step.transform.summary_report.value.check_time}
+Expiry Watch Window: ${param.days_ahead} Days
+
+OVERVIEW
+Service Accounts: Total: ${step.transform.summary_report.value.total_accounts}, With Expiring Tokens: ${step.transform.summary_report.value.total_issues}
+Token Status: Total: ${step.transform.summary_report.value.total_tokens}, Active: ${step.transform.summary_report.value.total_active}, Inactive: ${step.transform.summary_report.value.total_inactive}
+Token Expiration: Expiring (next ${param.days_ahead} days): ${step.transform.summary_report.value.total_expiring}, Expired: ${step.transform.summary_report.value.total_expired}
+
+${step.transform.format_report.value.expiring_report}
+${step.transform.format_report.value.expired_report}
+EMAIL
+    }
+  }
+
+  # Create Slack/other content (plain text)
+  step "transform" "slack_content" {
+    value = {
+      content = step.transform.full_report.value.combined
+    }
+  }
+
   # Determine notification content based on integrations in the notifier
   step "transform" "select_notification_content" {
     value = {
-      content = step.transform.full_report.value.combined
+      content = step.transform.check_email_integration.value.has_email ? step.transform.email_content.value.content : step.transform.slack_content.value.content
     }
   }
 
@@ -239,6 +298,18 @@ REPORT
       } : {
       notifier_configured        = false
       tokens_requiring_attention = step.transform.summary_report.value.has_issues
+    }
+  }
+
+  # Debug outputs to see notifier structure
+  output "debug_notifier" {
+    description = "Debug: Notifier structure and email detection"
+    value = param.notifier != null ? {
+      notifier_structure      = step.transform.debug_notifier_structure.value
+      email_integration_check = step.transform.debug_email_check.value
+      selected_content_type   = step.transform.check_email_integration.value.has_email ? "email" : "slack"
+      } : {
+      notifier_configured = false
     }
   }
 
