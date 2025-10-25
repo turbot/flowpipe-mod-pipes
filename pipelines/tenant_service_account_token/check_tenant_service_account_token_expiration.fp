@@ -183,21 +183,9 @@ pipeline "check_tenant_service_account_token_expiration" {
       total_accounts = step.transform.organize_data.value.total_service_accounts
       total_tokens   = length(step.transform.organize_data.value.all_tokens)
 
-      expiring_report = (length(step.transform.organize_data.value.expiring_tokens) > 0) ? join("", [
-        "\n\n--- EXPIRING TOKENS (within ${param.days_ahead} days) ---\n",
-        join("\n", [for token_idx, token_data in step.transform.organize_data.value.expiring_tokens :
-          "\n[${token_idx + 1}] Service Account: ${token_data.service_account_name}\n    Token Name:       ${token_data.token.token_name}\n    Token Status:     ${token_data.token.status}\n    Expires On:       ${token_data.token.expires_at}\n    Last 4 Chars:     ${token_data.token.last4}\n    Token ID:         ${token_data.token.token_id}"
-        ]),
-        "\n"
-      ]) : ""
+      expiring_report = (length(step.transform.organize_data.value.expiring_tokens) > 0) ? join("", concat(["EXPIRING TOKENS (within ${param.days_ahead} days)"], ["\n"], [for token_idx, token_data in step.transform.organize_data.value.expiring_tokens : "\nToken #${token_idx + 1}\nService Account: ${token_data.service_account_name}\nToken Name: ${token_data.token.token_name}\nStatus: ${token_data.token.status}\nExpires: ${token_data.token.expires_at}\nLast 4: ${token_data.token.last4}\nToken ID: ${token_data.token.token_id}"])) : ""
 
-      expired_report = (length(step.transform.organize_data.value.expired_tokens) > 0) ? join("", [
-        "\n\n--- EXPIRED TOKENS ---\n",
-        join("\n", [for token_idx, token_data in step.transform.organize_data.value.expired_tokens :
-          "\n[${token_idx + 1}] Service Account: ${token_data.service_account_name}\n    Token Name:       ${token_data.token.token_name}\n    Token Status:     ${token_data.token.status}\n    Expired On:       ${token_data.token.expires_at}\n    Last 4 Chars:     ${token_data.token.last4}\n    Token ID:         ${token_data.token.token_id}"
-        ]),
-        "\n"
-      ]) : ""
+      expired_report = (length(step.transform.organize_data.value.expired_tokens) > 0) ? join("", concat(["EXPIRED TOKENS"], ["\n"], [for token_idx, token_data in step.transform.organize_data.value.expired_tokens : "\nToken #${token_idx + 1}\nService Account: ${token_data.service_account_name}\nToken Name: ${token_data.token.token_name}\nStatus: ${token_data.token.status}\nExpired: ${token_data.token.expires_at}\nLast 4: ${token_data.token.last4}\nToken ID: ${token_data.token.token_id}"])) : ""
     }
   }
 
@@ -205,111 +193,65 @@ pipeline "check_tenant_service_account_token_expiration" {
     value = {
       combined = <<-REPORT
 TENANT SERVICE ACCOUNT TOKEN STATUS REPORT
-=========================================
 
-Tenant ID:              ${param.tenant_id}
-Check Time:             ${step.transform.build_report_data.value.check_time}
-Expiry Watch Window:    ${param.days_ahead} Days
 
---- OVERVIEW ---
+QUICK SUMMARY
+=============================================================
 
-Service Accounts:
-  Total:                    ${step.transform.build_report_data.value.total_accounts}
-  With Expiring Tokens:     ${step.transform.build_report_data.value.total_issues}
+Tenant ID:            ${param.tenant_id}
+Check Time:           ${step.transform.build_report_data.value.check_time}
+Expiry Window:        ${param.days_ahead} Days
 
-Token Status:
-  Total:                    ${step.transform.build_report_data.value.total_tokens}
-  Active:                   ${step.transform.build_report_data.value.total_active}
-  Inactive:                 ${step.transform.build_report_data.value.total_inactive}
 
-Token Expiration Summary:
-  Expiring (next ${param.days_ahead} days):     ${step.transform.build_report_data.value.total_expiring}
-  Expired:                  ${step.transform.build_report_data.value.total_expired}
+KEY METRICS
+=============================================================
+
+Total Service Accounts:       ${step.transform.build_report_data.value.total_accounts}
+Service Accounts With Issues: ${step.transform.build_report_data.value.total_issues}
+
+Total Tokens:                 ${step.transform.build_report_data.value.total_tokens}
+Active Tokens:                ${step.transform.build_report_data.value.total_active}
+Inactive Tokens:              ${step.transform.build_report_data.value.total_inactive}
+
+Expiring Soon:                ${step.transform.build_report_data.value.total_expiring}
+Already Expired:              ${step.transform.build_report_data.value.total_expired}
+
+
 ${step.transform.build_report_data.value.expiring_report}
+
 ${step.transform.build_report_data.value.expired_report}
 
-========================================
-End of Report
-REPORT
+=============================================================
+END OF REPORT
+=============================================================
+      REPORT
+    }
+  }
 
-      html_content = <<-HTML
-<div style="overflow:hidden;max-width:800px;margin:auto;">
-    <font size="-1">
-        <div dir="ltr">
-            <div style="color: rgb(26, 27, 33); font-family: Inter, -apple-system, 'system-ui', 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif; font-size: 16px; margin-bottom: 20px; width:inherit;">
-                <div style="margin-bottom: 20px;">
-                    <br />
-                    <div>
-                        <img src="https://pipes.turbot.com/images/pipes-wordmark-email.png" alt="Pipes Logo" height="40" />
-                    </div>
-                </div>
-                <div style="line-height:26px;margin-bottom:12px;text-align:initial;word-break:break-word">
-                    <h1 style="font-size:1.5em;margin-bottom:20px;">Tenant Service Account Token Status Report</h1>
-                    <p><strong>Tenant ID:</strong> ${param.tenant_id}</p>
-                    <p><strong>Check Time:</strong> ${step.transform.build_report_data.value.check_time}</p>
-                    <p><strong>Expiry Watch Window:</strong> ${param.days_ahead} Days</p>
-                    
-                    <hr style="color: inherit; font-family: Inter, -apple-system, 'system-ui', 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif; font-size: 14px; box-sizing: border-box; border-right: 0px solid rgb(235, 238, 242); border-bottom: 0px solid rgb(235, 238, 242); border-left: 0px solid rgb(235, 238, 242); border-top-style: solid; border-top-color: rgb(235, 238, 242); height: 0px; margin: 32px 0px; width:inherit;" />
-                    
-                    <h2 style="font-size:1em;">Overview</h2>
-                    <p><strong>Service Accounts:</strong> Total: ${step.transform.build_report_data.value.total_accounts}, With Expiring Tokens: ${step.transform.build_report_data.value.total_issues}</p>
-                    <p><strong>Token Status:</strong> Total: ${step.transform.build_report_data.value.total_tokens}, Active: ${step.transform.build_report_data.value.total_active}, Inactive: ${step.transform.build_report_data.value.total_inactive}</p>
-                    <p><strong>Token Expiration:</strong> Expiring (next ${param.days_ahead} days): ${step.transform.build_report_data.value.total_expiring}, Expired: ${step.transform.build_report_data.value.total_expired}</p>
+  # Send notification with subject and text
+  step "message" "notify_token_issues" {
+    if       = param.notifier != null && step.transform.build_report_data.value.has_issues
+    notifier = param.notifier
+    subject  = "Tenant Service Account Token Status Report"
+    text     = step.transform.format_outputs.value.combined
+  }
 
-                    ${length(step.transform.organize_data.value.expiring_tokens) > 0 ? join("", [
-      "<h2 style=\"font-size:1em;\">Expiring Tokens (within ${param.days_ahead} days)</h2>",
-      join("", [for token_idx, token_data in step.transform.organize_data.value.expiring_tokens :
-        "<div style=\"background-color: #fff3cd; border-left: 4px solid #ff9800; padding: 15px; margin: 10px 0; border-radius: 4px;\"><p><strong>Service Account:</strong> ${token_data.service_account_name}</p><p><strong>Token Name:</strong> ${token_data.token.token_name}</p><p><strong>Token Status:</strong> ${token_data.token.status}</p><p><strong>Expires On:</strong> ${token_data.token.expires_at}</p><p><strong>Last 4:</strong> ${token_data.token.last4}</p><p><strong>Token ID:</strong> ${token_data.token.token_id}</p></div>"
-      ])
-      ]) : ""}
+  output "formatted_summary" {
+    description = "Formatted summary for display"
+    value       = step.transform.format_outputs.value.combined
+  }
 
-                    ${length(step.transform.organize_data.value.expired_tokens) > 0 ? join("", [
-      "<h2 style=\"font-size:1em;\">Expired Tokens</h2>",
-      join("", [for token_idx, token_data in step.transform.organize_data.value.expired_tokens :
-        "<div style=\"background-color: #f8d7da; border-left: 4px solid #dc3545; padding: 15px; margin: 10px 0; border-radius: 4px;\"><p><strong>Service Account:</strong> ${token_data.service_account_name}</p><p><strong>Token Name:</strong> ${token_data.token.token_name}</p><p><strong>Token Status:</strong> ${token_data.token.status}</p><p><strong>Expired On:</strong> ${token_data.token.expires_at}</p><p><strong>Last 4:</strong> ${token_data.token.last4}</p><p><strong>Token ID:</strong> ${token_data.token.token_id}</p></div>"
-      ])
-]) : ""}
-                </div>
-            </div>
-            <div style="font-family: Inter, -apple-system, 'system-ui', 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif; box-sizing: border-box; border-style: solid; border-color: rgb(235, 238, 242); margin-top: 32px; margin-bottom: 32px; display: inline-block; border-radius: 6px; border-width: 1px; padding: 0 16px; color: rgb(90, 95, 104); width:100%;">
-                <p style="font-size: 14px;">
-                    You received this notification because you are monitoring service account token expiration for the ${param.tenant_id} tenant.
-                </p>
-                <p style="font-size: x-small;">
-                    Turbot HQ, Inc&nbsp;&nbsp;•&nbsp;&nbsp;500 Westover Dr #20232, Sanford, NC 27330, USA&nbsp;&nbsp;•&nbsp;&nbsp;+1-888-288-7268
-                </p>
-            </div>
-        </div>
-    </font>
-</div>
-HTML
-}
-}
-
-# Send notification with subject and text
-step "message" "notify_token_issues" {
-  if       = param.notifier != null && step.transform.build_report_data.value.has_issues
-  notifier = param.notifier
-  subject  = "Tenant Service Account Token Status Report"
-  text     = step.transform.format_outputs.value.combined
-}
-
-output "formatted_summary" {
-  description = "Formatted summary for display"
-  value       = step.transform.format_outputs.value.combined
-}
-
-# output "notification_status" {
-#   description = "Notification delivery status"
-#   value = param.notifier != null ? {
-#     notifier_configured        = true
-#     notification_sent          = !is_error(step.message.notify_token_issues)
-#     tokens_requiring_attention = step.transform.build_report_data.value.has_issues
-#     error_message              = is_error(step.message.notify_token_issues) ? error_message(step.message.notify_token_issues) : null
-#     } : {
-#     notifier_configured        = false
-#     tokens_requiring_attention = step.transform.build_report_data.value.has_issues
-#   }
-# }
+  # output "notification_status" {
+  #   description = "Notification delivery status"
+  #   value = param.notifier != null ? {
+  #     notifier_configured        = true
+  #     notification_sent          = !is_error(step.message.notify_token_issues)
+  #     tokens_requiring_attention = step.transform.build_report_data.value.has_issues
+  #     error_message              = is_error(step.message.notify_token_issues) ? error_message(step.message.notify_token_issues) : null
+  #     } : {
+  #     notifier_configured        = false
+  #     tokens_requiring_attention = step.transform.build_report_data.value.has_issues
+  #   }
+  # }
 }
 
