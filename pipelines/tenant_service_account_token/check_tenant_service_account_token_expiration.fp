@@ -233,11 +233,12 @@ REPORT
     }
   }
 
-  # Debug: Check email integration result
-  step "transform" "debug_email_check" {
+
+  # Debug: Check integration results
+  step "transform" "debug_integration_check" {
     value = {
       has_email           = step.transform.check_email_integration.value.has_email
-      email_check_details = "Has email integration: ${step.transform.check_email_integration.value.has_email}"
+      integration_details = "Email: ${step.transform.check_email_integration.value.has_email}"
     }
   }
 
@@ -311,11 +312,11 @@ step "transform" "select_notification_content" {
   }
 }
 
-# Send notification if notifier is configured and there are tokens requiring attention
+# Send notification - use HTML for email, plain text for all others
 step "message" "notify_token_issues" {
   if       = param.notifier != null && step.transform.summary_report.value.has_issues
   notifier = param.notifier
-  text     = step.transform.select_notification_content.value.content
+  text     = step.transform.check_email_integration.value.has_email ? step.transform.html_content.value.content : step.transform.slack_content.value.content
 }
 
 output "formatted_summary" {
@@ -323,10 +324,10 @@ output "formatted_summary" {
   value       = step.transform.full_report.value.combined
 }
 
-# output "html_summary" {
-#   description = "HTML formatted summary for email notifications"
-#   value       = step.transform.html_content.value.content
-# }
+output "html_summary" {
+  description = "HTML formatted summary for email notifications"
+  value       = step.transform.html_content.value.content
+}
 
 output "notification_status" {
   description = "Notification delivery status"
@@ -343,17 +344,17 @@ output "notification_status" {
 
 # Debug outputs to see notifier structure
 output "debug_notifier" {
-  description = "Debug: Notifier structure and email detection"
+  description = "Debug: Notifier structure and integration detection"
   value = param.notifier != null ? {
-    notifier_configured     = true
-    notifier_structure      = step.transform.debug_notifier_structure.value
-    email_integration_check = step.transform.debug_email_check.value
-    selected_content_type   = step.transform.check_email_integration.value.has_email ? "email" : "slack"
+    notifier_configured   = true
+    notifier_structure    = step.transform.debug_notifier_structure.value
+    integration_check     = step.transform.debug_integration_check.value
+    selected_content_type = step.transform.check_email_integration.value.has_email ? "html" : "plain_text"
     } : {
-    notifier_configured     = false
-    notifier_structure      = null
-    email_integration_check = null
-    selected_content_type   = "none"
+    notifier_configured   = false
+    notifier_structure    = null
+    integration_check     = null
+    selected_content_type = "none"
   }
 }
 
