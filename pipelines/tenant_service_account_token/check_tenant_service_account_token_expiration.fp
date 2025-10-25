@@ -277,18 +277,13 @@ step "message" "notify_token_issues" {
   if       = param.notifier != null && step.transform.build_report_data.value.has_issues
   notifier = param.notifier
   subject  = "Tenant Service Account Token Status Report"
-  text     = step.transform.format_outputs.value.html_content
+  text     = step.transform.format_outputs.value.combined
 }
 
 output "formatted_summary" {
   description = "Formatted summary for display"
   value       = step.transform.format_outputs.value.combined
 }
-
-# output "html_summary" {
-#   description = "HTML summary sent to email notifier"
-#   value       = step.transform.format_outputs.value.html_content
-# }
 
 # output "notification_status" {
 #   description = "Notification delivery status"
