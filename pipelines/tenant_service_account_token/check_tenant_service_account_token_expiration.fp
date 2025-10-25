@@ -183,9 +183,9 @@ pipeline "check_tenant_service_account_token_expiration" {
       total_accounts = step.transform.organize_data.value.total_service_accounts
       total_tokens   = length(step.transform.organize_data.value.all_tokens)
 
-      expiring_report = (length(step.transform.organize_data.value.expiring_tokens) > 0) ? join("\n\n", concat(["EXPIRING TOKENS (within ${param.days_ahead} days)"], [for token_idx, token_data in step.transform.organize_data.value.expiring_tokens : join("\n", ["Token #${token_idx + 1}", "Service Account: ${token_data.service_account_name}", "Token Name: ${token_data.token.token_name}", "Status: ${token_data.token.status}", "Expires: ${token_data.token.expires_at}", "Last 4: ${token_data.token.last4}", "Token ID: ${token_data.token.token_id}"])])) : ""
+      expiring_report = (length(step.transform.organize_data.value.expiring_tokens) > 0) ? join("\n", concat(["Expiring Tokens (within ${param.days_ahead} days)\n--------------------------------"], [for token_idx, token_data in step.transform.organize_data.value.expiring_tokens : join("\n", ["[${token_idx + 1}] Service Account: ${token_data.service_account_name}", "    Token Name:     ${token_data.token.token_name}", "    Token Status:   ${token_data.token.status}", "    Expires On:     ${token_data.token.expires_at}", "    Last 4 Chars:   ${token_data.token.last4}", "    Token ID:       ${token_data.token.token_id}"])])) : ""
 
-      expired_report = (length(step.transform.organize_data.value.expired_tokens) > 0) ? join("\n\n", concat(["EXPIRED TOKENS"], [for token_idx, token_data in step.transform.organize_data.value.expired_tokens : join("\n", ["Token #${token_idx + 1}", "Service Account: ${token_data.service_account_name}", "Token Name: ${token_data.token.token_name}", "Status: ${token_data.token.status}", "Expired: ${token_data.token.expires_at}", "Last 4: ${token_data.token.last4}", "Token ID: ${token_data.token.token_id}"])])) : ""
+      expired_report = (length(step.transform.organize_data.value.expired_tokens) > 0) ? join("\n", concat(["Expired Tokens\n--------------"], [for token_idx, token_data in step.transform.organize_data.value.expired_tokens : join("\n", ["[${token_idx + 1}] Service Account: ${token_data.service_account_name}", "    Token Name:     ${token_data.token.token_name}", "    Token Status:   ${token_data.token.status}", "    Expired On:     ${token_data.token.expires_at}", "    Last 4 Chars:   ${token_data.token.last4}", "    Token ID:       ${token_data.token.token_id}"])])) : ""
     }
   }
 
@@ -194,81 +194,69 @@ pipeline "check_tenant_service_account_token_expiration" {
     if       = param.notifier != null && step.transform.build_report_data.value.has_issues
     notifier = param.notifier
     subject  = "Tenant Service Account Token Status Report"
-    text     = <<HTML
-<html>
-<body style="font-family: monospace; white-space: pre-wrap; word-wrap: break-word;">
-<pre style="font-family: monospace; background-color: #f5f5f5; padding: 15px; border-radius: 4px; overflow-x: auto;">
-TENANT SERVICE ACCOUNT TOKEN STATUS REPORT
+    text     = <<TEXT
 
-QUICK SUMMARY
-=============================================================
+================================================================================
+  Tenant Service Account Token Status Report
+================================================================================
+Tenant ID:              ${param.tenant_id}
+Check Time:             ${step.transform.build_report_data.value.check_time}
+Expiry Watch Window:    ${param.days_ahead} Days
 
-Tenant ID:            ${param.tenant_id}
-Check Time:           ${step.transform.build_report_data.value.check_time}
-Expiry Window:        ${param.days_ahead} Days
+Service Accounts:
+  • Total:                    ${step.transform.build_report_data.value.total_accounts}
+  • With Expiring Tokens:     ${step.transform.build_report_data.value.total_issues}
 
+Token Status:
+  • Total:                    ${step.transform.build_report_data.value.total_tokens}
+  • Active:                   ${step.transform.build_report_data.value.total_active}
+  • Inactive:                 ${step.transform.build_report_data.value.total_inactive}
 
-KEY METRICS
-=============================================================
-
-Total Service Accounts:       ${step.transform.build_report_data.value.total_accounts}
-Service Accounts With Issues: ${step.transform.build_report_data.value.total_issues}
-
-Total Tokens:                 ${step.transform.build_report_data.value.total_tokens}
-Active Tokens:                ${step.transform.build_report_data.value.total_active}
-Inactive Tokens:              ${step.transform.build_report_data.value.total_inactive}
-
-Expiring Soon:                ${step.transform.build_report_data.value.total_expiring}
-Already Expired:              ${step.transform.build_report_data.value.total_expired}
+Token Expiration:
+  • Expiring (in ${param.days_ahead} days):    ${step.transform.build_report_data.value.total_expiring}
+  • Expired:                  ${step.transform.build_report_data.value.total_expired}
 
 ${step.transform.build_report_data.value.expiring_report}
 
 ${step.transform.build_report_data.value.expired_report}
 
-=============================================================
-END OF REPORT
-=============================================================
-</pre>
-</body>
-</html>
-HTML
+================================================================================
+End of Report
+================================================================================
+TEXT
   }
 
   output "formatted_summary" {
     description = "Formatted summary for display"
-    value       = <<-REPORT
+    value       = <<REPORT
 
-=============================================================
-TENANT SERVICE ACCOUNT TOKEN STATUS REPORT
-=============================================================
-Tenant ID:            ${param.tenant_id}
-Check Time:           ${step.transform.build_report_data.value.check_time}
-Expiry Window:        ${param.days_ahead} Days
-
-KEY METRICS
--------------------------------------------------------------
+================================================================================
+  Tenant Service Account Token Status Report
+================================================================================
+Tenant ID:              ${param.tenant_id}
+Check Time:             ${step.transform.build_report_data.value.check_time}
+Expiry Watch Window:    ${param.days_ahead} Days
 
 Service Accounts:
-  * Total: ${step.transform.build_report_data.value.total_accounts}
-  * With Expiring Tokens: ${step.transform.build_report_data.value.total_expiring}
-  
-Total Service Accounts:       ${step.transform.build_report_data.value.total_accounts}
-Service Accounts With Issues: ${step.transform.build_report_data.value.total_issues}
+  • Total:                    ${step.transform.build_report_data.value.total_accounts}
+  • With Expiring Tokens:     ${step.transform.build_report_data.value.total_issues}
 
-Total Tokens:                 ${step.transform.build_report_data.value.total_tokens}
-Active Tokens:                ${step.transform.build_report_data.value.total_active}
-Inactive Tokens:              ${step.transform.build_report_data.value.total_inactive}
+Token Status:
+  • Total:                    ${step.transform.build_report_data.value.total_tokens}
+  • Active:                   ${step.transform.build_report_data.value.total_active}
+  • Inactive:                 ${step.transform.build_report_data.value.total_inactive}
 
-Expiring Soon:                ${step.transform.build_report_data.value.total_expiring}
-Already Expired:              ${step.transform.build_report_data.value.total_expired}
+Token Expiration:
+  • Expiring (in ${param.days_ahead} days):    ${step.transform.build_report_data.value.total_expiring}
+  • Expired:                  ${step.transform.build_report_data.value.total_expired}
 
 ${step.transform.build_report_data.value.expiring_report}
 
 ${step.transform.build_report_data.value.expired_report}
 
-=============================================================
-END OF REPORT
-=============================================================
-    REPORT
+================================================================================
+End of Report
+================================================================================
+REPORT
   }
 }
