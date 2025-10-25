@@ -194,7 +194,10 @@ pipeline "check_tenant_service_account_token_expiration" {
     if       = param.notifier != null && step.transform.build_report_data.value.has_issues
     notifier = param.notifier
     subject  = "Tenant Service Account Token Status Report"
-    text     = <<-REPORT
+    text     = <<-HTML
+<html>
+<body style="font-family: monospace; white-space: pre-wrap; word-wrap: break-word;">
+<pre style="font-family: monospace; background-color: #f5f5f5; padding: 15px; border-radius: 4px; overflow-x: auto;">
 TENANT SERVICE ACCOUNT TOKEN STATUS REPORT
 
 QUICK SUMMARY
@@ -225,7 +228,10 @@ ${step.transform.build_report_data.value.expired_report}
 =============================================================
 END OF REPORT
 =============================================================
-    REPORT
+</pre>
+</body>
+</html>
+    HTML
   }
 
   output "formatted_summary" {
