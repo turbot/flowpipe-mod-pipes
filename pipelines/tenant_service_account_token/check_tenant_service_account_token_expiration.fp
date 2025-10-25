@@ -194,7 +194,7 @@ pipeline "check_tenant_service_account_token_expiration" {
     if       = param.notifier != null && step.transform.build_report_data.value.has_issues
     notifier = param.notifier
     subject  = "Tenant Service Account Token Status Report"
-    text     = <<-HTML
+    text     = <<HTML
 <html>
 <body style="font-family: monospace; white-space: pre-wrap; word-wrap: break-word;">
 <pre style="font-family: monospace; background-color: #f5f5f5; padding: 15px; border-radius: 4px; overflow-x: auto;">
@@ -231,25 +231,27 @@ END OF REPORT
 </pre>
 </body>
 </html>
-    HTML
+HTML
   }
 
   output "formatted_summary" {
     description = "Formatted summary for display"
     value       = <<-REPORT
-TENANT SERVICE ACCOUNT TOKEN STATUS REPORT
 
-QUICK SUMMARY
 =============================================================
-
+TENANT SERVICE ACCOUNT TOKEN STATUS REPORT
+=============================================================
 Tenant ID:            ${param.tenant_id}
 Check Time:           ${step.transform.build_report_data.value.check_time}
 Expiry Window:        ${param.days_ahead} Days
 
-
 KEY METRICS
-=============================================================
+-------------------------------------------------------------
 
+Service Accounts:
+  * Total: ${step.transform.build_report_data.value.total_accounts}
+  * With Expiring Tokens: ${step.transform.build_report_data.value.total_expiring}
+  
 Total Service Accounts:       ${step.transform.build_report_data.value.total_accounts}
 Service Accounts With Issues: ${step.transform.build_report_data.value.total_issues}
 
