@@ -242,58 +242,59 @@ REPORT
     }
   }
 
-  # Create HTML content for email
+  # Create HTML content for email using Pipes template structure
   step "transform" "html_content" {
     value = {
       content = <<-HTML
-<!DOCTYPE html>
-<html>
-<head>
-    <style>
-        body { font-family: Arial, sans-serif; margin: 20px; }
-        .header { background-color: #f4f4f4; padding: 15px; border-radius: 5px; }
-        .section { margin: 20px 0; }
-        .section-title { font-weight: bold; font-size: 16px; margin-bottom: 10px; color: #333; }
-        .token-entry { background-color: #f9f9f9; padding: 10px; margin: 10px 0; border-left: 4px solid #007cba; }
-        .token-field { margin: 5px 0; }
-        .label { font-weight: bold; }
-        .expiring { border-left-color: #ff9800; }
-        .expired { border-left-color: #f44336; }
-    </style>
-</head>
-<body>
-    <div class="header">
-        <h2>Tenant Service Account Token Status Report</h2>
-        <p><strong>Tenant ID:</strong> ${param.tenant_id}</p>
-        <p><strong>Check Time:</strong> ${step.transform.summary_report.value.check_time}</p>
-        <p><strong>Expiry Watch Window:</strong> ${param.days_ahead} Days</p>
-    </div>
+<div style="overflow:hidden;max-width:800px;margin:auto;">
+    <font size="-1">
+        <div dir="ltr">
+            <div style="color: rgb(26, 27, 33); font-family: Inter, -apple-system, 'system-ui', 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif; font-size: 16px; margin-bottom: 20px; width:inherit;">
+                <div style="margin-bottom: 20px;">
+                    <br />
+                    <div>
+                        <img src="https://pipes.turbot.com/images/pipes-wordmark-email.png" alt="Pipes Logo" height="40" />
+                    </div>
+                </div>
+                <div style="line-height:26px;margin-bottom:12px;text-align:initial;word-break:break-word">
+                    <h1 style="font-size:1.5em;margin-bottom:20px;">Tenant Service Account Token Status Report</h1>
+                    <p><strong>Tenant ID:</strong> ${param.tenant_id}</p>
+                    <p><strong>Check Time:</strong> ${step.transform.summary_report.value.check_time}</p>
+                    <p><strong>Expiry Watch Window:</strong> ${param.days_ahead} Days</p>
+                    
+                    <hr style="color: inherit; font-family: Inter, -apple-system, 'system-ui', 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif; font-size: 14px; box-sizing: border-box; border-right: 0px solid rgb(235, 238, 242); border-bottom: 0px solid rgb(235, 238, 242); border-left: 0px solid rgb(235, 238, 242); border-top-style: solid; border-top-color: rgb(235, 238, 242); height: 0px; margin: 32px 0px; width:inherit;" />
+                    
+                    <h2 style="font-size:1em;">Overview</h2>
+                    <p><strong>Service Accounts:</strong> Total: ${step.transform.summary_report.value.total_accounts}, With Expiring Tokens: ${step.transform.summary_report.value.total_issues}</p>
+                    <p><strong>Token Status:</strong> Total: ${step.transform.summary_report.value.total_tokens}, Active: ${step.transform.summary_report.value.total_active}, Inactive: ${step.transform.summary_report.value.total_inactive}</p>
+                    <p><strong>Token Expiration:</strong> Expiring (next ${param.days_ahead} days): ${step.transform.summary_report.value.total_expiring}, Expired: ${step.transform.summary_report.value.total_expired}</p>
 
-    <div class="section">
-        <div class="section-title">Overview</div>
-        <p><strong>Service Accounts:</strong> Total: ${step.transform.summary_report.value.total_accounts}, With Expiring Tokens: ${step.transform.summary_report.value.total_issues}</p>
-        <p><strong>Token Status:</strong> Total: ${step.transform.summary_report.value.total_tokens}, Active: ${step.transform.summary_report.value.total_active}, Inactive: ${step.transform.summary_report.value.total_inactive}</p>
-        <p><strong>Token Expiration:</strong> Expiring (next ${param.days_ahead} days): ${step.transform.summary_report.value.total_expiring}, Expired: ${step.transform.summary_report.value.total_expired}</p>
-    </div>
-
-    ${length(step.transform.all_tokens_flat.value.expiring_tokens) > 0 ? join("", [
-      "<div class=\"section\"><div class=\"section-title\">⚠️ Expiring Tokens (within ${param.days_ahead} days)</div>",
+                    ${length(step.transform.all_tokens_flat.value.expiring_tokens) > 0 ? join("", [
+      "<h2 style=\"font-size:1em;\">⚠️ Expiring Tokens (within ${param.days_ahead} days)</h2>",
       join("", [for token_idx, token_data in step.transform.all_tokens_flat.value.expiring_tokens :
-        "<div class=\"token-entry expiring\"><div class=\"token-field\"><span class=\"label\">Service Account:</span> ${token_data.service_account_name}</div><div class=\"token-field\"><span class=\"label\">Token Name:</span> ${token_data.token.token_name}</div><div class=\"token-field\"><span class=\"label\">Token Status:</span> ${token_data.token.status}</div><div class=\"token-field\"><span class=\"label\">Expires On:</span> ${token_data.token.expires_at}</div><div class=\"token-field\"><span class=\"label\">Last 4:</span> ${token_data.token.last4}</div><div class=\"token-field\"><span class=\"label\">Token ID:</span> ${token_data.token.token_id}</div></div>"
-      ]),
-      "</div>"
+        "<div style=\"background-color: #fff3cd; border-left: 4px solid #ff9800; padding: 15px; margin: 10px 0; border-radius: 4px;\"><p><strong>Service Account:</strong> ${token_data.service_account_name}</p><p><strong>Token Name:</strong> ${token_data.token.token_name}</p><p><strong>Token Status:</strong> ${token_data.token.status}</p><p><strong>Expires On:</strong> ${token_data.token.expires_at}</p><p><strong>Last 4:</strong> ${token_data.token.last4}</p><p><strong>Token ID:</strong> ${token_data.token.token_id}</p></div>"
+      ])
       ]) : ""}
 
-    ${length(step.transform.all_tokens_flat.value.expired_tokens) > 0 ? join("", [
-      "<div class=\"section\"><div class=\"section-title\">🚨 Expired Tokens</div>",
+                    ${length(step.transform.all_tokens_flat.value.expired_tokens) > 0 ? join("", [
+      "<h2 style=\"font-size:1em;\">🚨 Expired Tokens</h2>",
       join("", [for token_idx, token_data in step.transform.all_tokens_flat.value.expired_tokens :
-        "<div class=\"token-entry expired\"><div class=\"token-field\"><span class=\"label\">Service Account:</span> ${token_data.service_account_name}</div><div class=\"token-field\"><span class=\"label\">Token Name:</span> ${token_data.token.token_name}</div><div class=\"token-field\"><span class=\"label\">Token Status:</span> ${token_data.token.status}</div><div class=\"token-field\"><span class=\"label\">Expired On:</span> ${token_data.token.expires_at}</div><div class=\"token-field\"><span class=\"label\">Last 4:</span> ${token_data.token.last4}</div><div class=\"token-field\"><span class=\"label\">Token ID:</span> ${token_data.token.token_id}</div></div>"
-      ]),
-      "</div>"
+        "<div style=\"background-color: #f8d7da; border-left: 4px solid #dc3545; padding: 15px; margin: 10px 0; border-radius: 4px;\"><p><strong>Service Account:</strong> ${token_data.service_account_name}</p><p><strong>Token Name:</strong> ${token_data.token.token_name}</p><p><strong>Token Status:</strong> ${token_data.token.status}</p><p><strong>Expired On:</strong> ${token_data.token.expires_at}</p><p><strong>Last 4:</strong> ${token_data.token.last4}</p><p><strong>Token ID:</strong> ${token_data.token.token_id}</p></div>"
+      ])
 ]) : ""}
-
-</body>
-</html>
+                </div>
+            </div>
+            <div style="font-family: Inter, -apple-system, 'system-ui', 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif; box-sizing: border-box; border-style: solid; border-color: rgb(235, 238, 242); margin-top: 32px; margin-bottom: 32px; display: inline-block; border-radius: 6px; border-width: 1px; padding: 0 16px; color: rgb(90, 95, 104); width:100%;">
+                <p style="font-size: 14px;">
+                    You received this notification because you are monitoring service account token expiration for the ${param.tenant_id} tenant.
+                </p>
+                <p style="font-size: x-small;">
+                    Turbot HQ, Inc&nbsp;&nbsp;•&nbsp;&nbsp;500 Westover Dr #20232, Sanford, NC 27330, USA&nbsp;&nbsp;•&nbsp;&nbsp;+1-888-288-7268
+                </p>
+            </div>
+        </div>
+    </font>
+</div>
 HTML
 }
 }
@@ -312,11 +313,11 @@ step "transform" "select_notification_content" {
   }
 }
 
-# Send notification - use HTML for email, plain text for all others
+# Send notification - always use plain text since notifier doesn't render HTML
 step "message" "notify_token_issues" {
   if       = param.notifier != null && step.transform.summary_report.value.has_issues
   notifier = param.notifier
-  text     = step.transform.check_email_integration.value.has_email ? step.transform.html_content.value.content : step.transform.slack_content.value.content
+  text     = step.transform.slack_content.value.content
 }
 
 output "formatted_summary" {
