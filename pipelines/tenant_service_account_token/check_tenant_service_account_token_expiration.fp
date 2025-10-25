@@ -195,15 +195,14 @@ pipeline "check_tenant_service_account_token_expiration" {
     notifier = param.notifier
     subject  = "Tenant Service Account Token Status Report"
     text     = <<TEXT
-
-================================================================================
-  Tenant Service Account Token Status Report
-================================================================================
-Tenant ID:              ${param.tenant_id}
+============================================================
+  Tenant Service Account Token Status Report                
+============================================================
+Tenant ID:              ${param.tenant_id}                  
 Check Time:             ${step.transform.build_report_data.value.check_time}
-Expiry Watch Window:    ${param.days_ahead} Days
-
-Service Accounts:
+Expiry Watch Window:    ${param.days_ahead} Days            
+                                                            
+Service Accounts:                                           
   • Total:                    ${step.transform.build_report_data.value.total_accounts}
   • With Expiring Tokens:     ${step.transform.build_report_data.value.total_issues}
 
@@ -220,9 +219,9 @@ ${step.transform.build_report_data.value.expiring_report}
 
 ${step.transform.build_report_data.value.expired_report}
 
-================================================================================
+============================================================
 End of Report
-================================================================================
+============================================================
 TEXT
   }
 
