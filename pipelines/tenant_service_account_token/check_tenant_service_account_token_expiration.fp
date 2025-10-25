@@ -25,15 +25,6 @@ pipeline "check_tenant_service_account_token_expiration" {
     optional    = true
   }
 
-  # Debug: Check notifier structure
-  step "transform" "debug_notifier_structure" {
-    value = {
-      full_notifier     = param.notifier != null ? jsonencode(param.notifier) : "null"
-      notifies_array    = param.notifier != null ? jsonencode(param.notifier.notifies) : "null"
-      integration_types = param.notifier != null ? jsonencode([for integration in param.notifier.notifies : integration.integration.type]) : "null"
-    }
-  }
-
   step "pipeline" "list_service_accounts" {
     pipeline = pipeline.list_tenant_service_accounts
     args = {
@@ -156,27 +147,6 @@ pipeline "check_tenant_service_account_token_expiration" {
     }
   }
 
-  # Generate report text in a single step
-  step "transform" "format_report" {
-    value = {
-      expiring_report = (length(step.transform.all_tokens_flat.value.expiring_tokens) > 0) ? join("", [
-        "\nExpiring Tokens (within ${param.days_ahead} days):\n",
-        join("\n", [for token_idx, token_data in step.transform.all_tokens_flat.value.expiring_tokens :
-          "${token_idx + 1}. Service Account: ${token_data.service_account_name}\n   Token Name: ${token_data.token.token_name}\n   Token Status: ${token_data.token.status}\n   Expires On: ${token_data.token.expires_at}\n   Last 4: ${token_data.token.last4}\n   Token ID: ${token_data.token.token_id}"
-        ]),
-        "\n"
-      ]) : ""
-
-      expired_report = (length(step.transform.all_tokens_flat.value.expired_tokens) > 0) ? join("", [
-        "\nExpired Tokens:\n",
-        join("\n", [for token_idx, token_data in step.transform.all_tokens_flat.value.expired_tokens :
-          "${token_idx + 1}. Service Account: ${token_data.service_account_name}\n   Token Name: ${token_data.token.token_name}\n   Token Status: ${token_data.token.status}\n   Expired On: ${token_data.token.expires_at}\n   Last 4: ${token_data.token.last4}\n   Token ID: ${token_data.token.token_id}"
-        ]),
-        "\n"
-      ]) : ""
-    }
-  }
-
   # Consolidated summary calculations
   step "transform" "summary_report" {
     value = {
@@ -212,104 +182,50 @@ EOF
   step "transform" "full_report" {
     value = {
       summary        = step.transform.summary_text_builder.value
-      expiring_table = step.transform.format_report.value.expiring_report
-      expired_table  = step.transform.format_report.value.expired_report
-      combined       = <<-REPORT
-${step.transform.summary_text_builder.value}
-${step.transform.format_report.value.expiring_report}
-${step.transform.format_report.value.expired_report}
-REPORT
+      expiring_table = ""                                        # Removed expiring_report
+      expired_table  = ""                                        # Removed expired_report
+      combined       = step.transform.summary_text_builder.value # Combined summary text
     }
   }
 
-  # Check if notifier has email integration
-  step "transform" "check_email_integration" {
+  # Create markdown content for all notifiers
+  step "transform" "slack_content" {
     value = {
-      has_email = param.notifier != null ? try(length([
-        for integration in param.notifier.notifies :
-        integration
-        if integration.integration.type == "email"
-      ]) > 0, false) : false
-    }
-  }
+      content = <<-MARKDOWN
+*Tenant Service Account Token Status Report*
 
+Tenant ID: ${param.tenant_id}
+Check Time: ${step.transform.summary_report.value.check_time}
+Expiry Watch Window: ${param.days_ahead} Days
 
-  # Debug: Check integration results
-  step "transform" "debug_integration_check" {
-    value = {
-      has_email           = step.transform.check_email_integration.value.has_email
-      integration_details = "Email: ${step.transform.check_email_integration.value.has_email}"
-    }
-  }
+*OVERVIEW*
+Service Accounts: Total: ${step.transform.summary_report.value.total_accounts}, With Expiring Tokens: ${step.transform.summary_report.value.total_issues}
+Token Status: Total: ${step.transform.summary_report.value.total_tokens}, Active: ${step.transform.summary_report.value.total_active}, Inactive: ${step.transform.summary_report.value.total_inactive}
+Token Expiration: Expiring (next ${param.days_ahead} days): ${step.transform.summary_report.value.total_expiring}, Expired: ${step.transform.summary_report.value.total_expired}
 
-  # Create HTML content for email using Pipes template structure
-  step "transform" "html_content" {
-    value = {
-      content = <<-HTML
-<div style="overflow:hidden;max-width:800px;margin:auto;">
-    <font size="-1">
-        <div dir="ltr">
-            <div style="color: rgb(26, 27, 33); font-family: Inter, -apple-system, 'system-ui', 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif; font-size: 16px; margin-bottom: 20px; width:inherit;">
-                <div style="margin-bottom: 20px;">
-                    <br />
-                    <div>
-                        <img src="https://pipes.turbot.com/images/pipes-wordmark-email.png" alt="Pipes Logo" height="40" />
-                    </div>
-                </div>
-                <div style="line-height:26px;margin-bottom:12px;text-align:initial;word-break:break-word">
-                    <h1 style="font-size:1.5em;margin-bottom:20px;">Tenant Service Account Token Status Report</h1>
-                    <p><strong>Tenant ID:</strong> ${param.tenant_id}</p>
-                    <p><strong>Check Time:</strong> ${step.transform.summary_report.value.check_time}</p>
-                    <p><strong>Expiry Watch Window:</strong> ${param.days_ahead} Days</p>
-                    
-                    <hr style="color: inherit; font-family: Inter, -apple-system, 'system-ui', 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif; font-size: 14px; box-sizing: border-box; border-right: 0px solid rgb(235, 238, 242); border-bottom: 0px solid rgb(235, 238, 242); border-left: 0px solid rgb(235, 238, 242); border-top-style: solid; border-top-color: rgb(235, 238, 242); height: 0px; margin: 32px 0px; width:inherit;" />
-                    
-                    <h2 style="font-size:1em;">Overview</h2>
-                    <p><strong>Service Accounts:</strong> Total: ${step.transform.summary_report.value.total_accounts}, With Expiring Tokens: ${step.transform.summary_report.value.total_issues}</p>
-                    <p><strong>Token Status:</strong> Total: ${step.transform.summary_report.value.total_tokens}, Active: ${step.transform.summary_report.value.total_active}, Inactive: ${step.transform.summary_report.value.total_inactive}</p>
-                    <p><strong>Token Expiration:</strong> Expiring (next ${param.days_ahead} days): ${step.transform.summary_report.value.total_expiring}, Expired: ${step.transform.summary_report.value.total_expired}</p>
-
-                    ${length(step.transform.all_tokens_flat.value.expiring_tokens) > 0 ? join("", [
-      "<h2 style=\"font-size:1em;\">⚠️ Expiring Tokens (within ${param.days_ahead} days)</h2>",
-      join("", [for token_idx, token_data in step.transform.all_tokens_flat.value.expiring_tokens :
-        "<div style=\"background-color: #fff3cd; border-left: 4px solid #ff9800; padding: 15px; margin: 10px 0; border-radius: 4px;\"><p><strong>Service Account:</strong> ${token_data.service_account_name}</p><p><strong>Token Name:</strong> ${token_data.token.token_name}</p><p><strong>Token Status:</strong> ${token_data.token.status}</p><p><strong>Expires On:</strong> ${token_data.token.expires_at}</p><p><strong>Last 4:</strong> ${token_data.token.last4}</p><p><strong>Token ID:</strong> ${token_data.token.token_id}</p></div>"
-      ])
+${length(step.transform.all_tokens_flat.value.expiring_tokens) > 0 ? join("", [
+      "\n*EXPIRING TOKENS (within ${param.days_ahead} days)*\n",
+      join("\n", [for token_idx, token_data in step.transform.all_tokens_flat.value.expiring_tokens :
+        "${token_idx + 1}. Service Account: ${token_data.service_account_name}\n   Token Name: ${token_data.token.token_name}\n   Token Status: ${token_data.token.status}\n   Expires On: ${token_data.token.expires_at}\n   Last 4: ${token_data.token.last4}\n   Token ID: ${token_data.token.token_id}"
+      ]),
+      "\n"
       ]) : ""}
 
-                    ${length(step.transform.all_tokens_flat.value.expired_tokens) > 0 ? join("", [
-      "<h2 style=\"font-size:1em;\">🚨 Expired Tokens</h2>",
-      join("", [for token_idx, token_data in step.transform.all_tokens_flat.value.expired_tokens :
-        "<div style=\"background-color: #f8d7da; border-left: 4px solid #dc3545; padding: 15px; margin: 10px 0; border-radius: 4px;\"><p><strong>Service Account:</strong> ${token_data.service_account_name}</p><p><strong>Token Name:</strong> ${token_data.token.token_name}</p><p><strong>Token Status:</strong> ${token_data.token.status}</p><p><strong>Expired On:</strong> ${token_data.token.expires_at}</p><p><strong>Last 4:</strong> ${token_data.token.last4}</p><p><strong>Token ID:</strong> ${token_data.token.token_id}</p></div>"
-      ])
+${length(step.transform.all_tokens_flat.value.expired_tokens) > 0 ? join("", [
+      "\n*EXPIRED TOKENS*\n",
+      join("\n", [for token_idx, token_data in step.transform.all_tokens_flat.value.expired_tokens :
+        "${token_idx + 1}. Service Account: ${token_data.service_account_name}\n   Token Name: ${token_data.token.token_name}\n   Token Status: ${token_data.token.status}\n   Expired On: ${token_data.token.expires_at}\n   Last 4: ${token_data.token.last4}\n   Token ID: ${token_data.token.token_id}"
+      ]),
+      "\n"
 ]) : ""}
-                </div>
-            </div>
-            <div style="font-family: Inter, -apple-system, 'system-ui', 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif; box-sizing: border-box; border-style: solid; border-color: rgb(235, 238, 242); margin-top: 32px; margin-bottom: 32px; display: inline-block; border-radius: 6px; border-width: 1px; padding: 0 16px; color: rgb(90, 95, 104); width:100%;">
-                <p style="font-size: 14px;">
-                    You received this notification because you are monitoring service account token expiration for the ${param.tenant_id} tenant.
-                </p>
-                <p style="font-size: x-small;">
-                    Turbot HQ, Inc&nbsp;&nbsp;•&nbsp;&nbsp;500 Westover Dr #20232, Sanford, NC 27330, USA&nbsp;&nbsp;•&nbsp;&nbsp;+1-888-288-7268
-                </p>
-            </div>
-        </div>
-    </font>
-</div>
-HTML
+MARKDOWN
 }
-}
-
-# Create Slack/other content (plain text)
-step "transform" "slack_content" {
-  value = {
-    content = step.transform.full_report.value.combined
-  }
 }
 
 # Determine notification content based on integrations in the notifier
 step "transform" "select_notification_content" {
   value = {
-    content = step.transform.check_email_integration.value.has_email ? step.transform.html_content.value.content : step.transform.slack_content.value.content
+    content = step.transform.slack_content.value.content
   }
 }
 
@@ -322,12 +238,7 @@ step "message" "notify_token_issues" {
 
 output "formatted_summary" {
   description = "Formatted summary for display - sent to all notification channels"
-  value       = step.transform.full_report.value.combined
-}
-
-output "html_summary" {
-  description = "HTML formatted summary for email notifications"
-  value       = step.transform.html_content.value.content
+  value       = step.transform.slack_content.value.content
 }
 
 output "notification_status" {
@@ -340,22 +251,6 @@ output "notification_status" {
     } : {
     notifier_configured        = false
     tokens_requiring_attention = step.transform.summary_report.value.has_issues
-  }
-}
-
-# Debug outputs to see notifier structure
-output "debug_notifier" {
-  description = "Debug: Notifier structure and integration detection"
-  value = param.notifier != null ? {
-    notifier_configured   = true
-    notifier_structure    = step.transform.debug_notifier_structure.value
-    integration_check     = step.transform.debug_integration_check.value
-    selected_content_type = step.transform.check_email_integration.value.has_email ? "html" : "plain_text"
-    } : {
-    notifier_configured   = false
-    notifier_structure    = null
-    integration_check     = null
-    selected_content_type = "none"
   }
 }
 
