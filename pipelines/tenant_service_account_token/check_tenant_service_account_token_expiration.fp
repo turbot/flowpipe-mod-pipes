@@ -183,9 +183,9 @@ pipeline "check_tenant_service_account_token_expiration" {
       total_accounts = step.transform.organize_data.value.total_service_accounts
       total_tokens   = length(step.transform.organize_data.value.all_tokens)
 
-      expiring_report = (length(step.transform.organize_data.value.expiring_tokens) > 0) ? join("", concat(["EXPIRING TOKENS (within ${param.days_ahead} days)"], ["\n"], [for token_idx, token_data in step.transform.organize_data.value.expiring_tokens : "\nToken #${token_idx + 1}\nService Account: ${token_data.service_account_name}\nToken Name: ${token_data.token.token_name}\nStatus: ${token_data.token.status}\nExpires: ${token_data.token.expires_at}\nLast 4: ${token_data.token.last4}\nToken ID: ${token_data.token.token_id}"])) : ""
+      expiring_report = (length(step.transform.organize_data.value.expiring_tokens) > 0) ? join("\n", concat(["EXPIRING TOKENS (within ${param.days_ahead} days)"], [for token_idx, token_data in step.transform.organize_data.value.expiring_tokens : join("\n", ["Token #${token_idx + 1}", "Service Account: ${token_data.service_account_name}", "Token Name: ${token_data.token.token_name}", "Status: ${token_data.token.status}", "Expires: ${token_data.token.expires_at}", "Last 4: ${token_data.token.last4}", "Token ID: ${token_data.token.token_id}"])])) : ""
 
-      expired_report = (length(step.transform.organize_data.value.expired_tokens) > 0) ? join("", concat(["EXPIRED TOKENS"], ["\n"], [for token_idx, token_data in step.transform.organize_data.value.expired_tokens : "\nToken #${token_idx + 1}\nService Account: ${token_data.service_account_name}\nToken Name: ${token_data.token.token_name}\nStatus: ${token_data.token.status}\nExpired: ${token_data.token.expires_at}\nLast 4: ${token_data.token.last4}\nToken ID: ${token_data.token.token_id}"])) : ""
+      expired_report = (length(step.transform.organize_data.value.expired_tokens) > 0) ? join("\n", concat(["EXPIRED TOKENS"], [for token_idx, token_data in step.transform.organize_data.value.expired_tokens : join("\n", ["Token #${token_idx + 1}", "Service Account: ${token_data.service_account_name}", "Token Name: ${token_data.token.token_name}", "Status: ${token_data.token.status}", "Expired: ${token_data.token.expires_at}", "Last 4: ${token_data.token.last4}", "Token ID: ${token_data.token.token_id}"])])) : ""
     }
   }
 
