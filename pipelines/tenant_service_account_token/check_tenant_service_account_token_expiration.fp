@@ -183,17 +183,19 @@ pipeline "check_tenant_service_account_token_expiration" {
       total_accounts = step.transform.organize_data.value.total_service_accounts
       total_tokens   = length(step.transform.organize_data.value.all_tokens)
 
-      expiring_report = (length(step.transform.organize_data.value.expiring_tokens) > 0) ? join("\n", concat(["EXPIRING TOKENS (within ${param.days_ahead} days)"], [for token_idx, token_data in step.transform.organize_data.value.expiring_tokens : join("\n", ["Token #${token_idx + 1}", "Service Account: ${token_data.service_account_name}", "Token Name: ${token_data.token.token_name}", "Status: ${token_data.token.status}", "Expires: ${token_data.token.expires_at}", "Last 4: ${token_data.token.last4}", "Token ID: ${token_data.token.token_id}"])])) : ""
+      expiring_report = (length(step.transform.organize_data.value.expiring_tokens) > 0) ? join("\n\n", concat(["EXPIRING TOKENS (within ${param.days_ahead} days)"], [for token_idx, token_data in step.transform.organize_data.value.expiring_tokens : join("\n", ["Token #${token_idx + 1}", "Service Account: ${token_data.service_account_name}", "Token Name: ${token_data.token.token_name}", "Status: ${token_data.token.status}", "Expires: ${token_data.token.expires_at}", "Last 4: ${token_data.token.last4}", "Token ID: ${token_data.token.token_id}"])])) : ""
 
-      expired_report = (length(step.transform.organize_data.value.expired_tokens) > 0) ? join("\n", concat(["EXPIRED TOKENS"], [for token_idx, token_data in step.transform.organize_data.value.expired_tokens : join("\n", ["Token #${token_idx + 1}", "Service Account: ${token_data.service_account_name}", "Token Name: ${token_data.token.token_name}", "Status: ${token_data.token.status}", "Expired: ${token_data.token.expires_at}", "Last 4: ${token_data.token.last4}", "Token ID: ${token_data.token.token_id}"])])) : ""
+      expired_report = (length(step.transform.organize_data.value.expired_tokens) > 0) ? join("\n\n", concat(["EXPIRED TOKENS"], [for token_idx, token_data in step.transform.organize_data.value.expired_tokens : join("\n", ["Token #${token_idx + 1}", "Service Account: ${token_data.service_account_name}", "Token Name: ${token_data.token.token_name}", "Status: ${token_data.token.status}", "Expired: ${token_data.token.expires_at}", "Last 4: ${token_data.token.last4}", "Token ID: ${token_data.token.token_id}"])])) : ""
     }
   }
 
-  step "transform" "format_outputs" {
-    value = {
-      combined = <<-REPORT
+  # Send notification with subject and text (works with or without notifier)
+  step "message" "notify_token_issues" {
+    if       = param.notifier != null && step.transform.build_report_data.value.has_issues
+    notifier = param.notifier
+    subject  = "Tenant Service Account Token Status Report"
+    text     = <<-REPORT
 TENANT SERVICE ACCOUNT TOKEN STATUS REPORT
-
 
 QUICK SUMMARY
 =============================================================
@@ -216,6 +218,41 @@ Inactive Tokens:              ${step.transform.build_report_data.value.total_ina
 Expiring Soon:                ${step.transform.build_report_data.value.total_expiring}
 Already Expired:              ${step.transform.build_report_data.value.total_expired}
 
+${step.transform.build_report_data.value.expiring_report}
+
+${step.transform.build_report_data.value.expired_report}
+
+=============================================================
+END OF REPORT
+=============================================================
+    REPORT
+  }
+
+  output "formatted_summary" {
+    description = "Formatted summary for display"
+    value       = <<-REPORT
+TENANT SERVICE ACCOUNT TOKEN STATUS REPORT
+
+QUICK SUMMARY
+=============================================================
+
+Tenant ID:            ${param.tenant_id}
+Check Time:           ${step.transform.build_report_data.value.check_time}
+Expiry Window:        ${param.days_ahead} Days
+
+
+KEY METRICS
+=============================================================
+
+Total Service Accounts:       ${step.transform.build_report_data.value.total_accounts}
+Service Accounts With Issues: ${step.transform.build_report_data.value.total_issues}
+
+Total Tokens:                 ${step.transform.build_report_data.value.total_tokens}
+Active Tokens:                ${step.transform.build_report_data.value.total_active}
+Inactive Tokens:              ${step.transform.build_report_data.value.total_inactive}
+
+Expiring Soon:                ${step.transform.build_report_data.value.total_expiring}
+Already Expired:              ${step.transform.build_report_data.value.total_expired}
 
 ${step.transform.build_report_data.value.expiring_report}
 
@@ -224,34 +261,6 @@ ${step.transform.build_report_data.value.expired_report}
 =============================================================
 END OF REPORT
 =============================================================
-      REPORT
-    }
+    REPORT
   }
-
-  # Send notification with subject and text
-  step "message" "notify_token_issues" {
-    if       = param.notifier != null && step.transform.build_report_data.value.has_issues
-    notifier = param.notifier
-    subject  = "Tenant Service Account Token Status Report"
-    text     = step.transform.format_outputs.value.combined
-  }
-
-  output "formatted_summary" {
-    description = "Formatted summary for display"
-    value       = step.transform.format_outputs.value.combined
-  }
-
-  # output "notification_status" {
-  #   description = "Notification delivery status"
-  #   value = param.notifier != null ? {
-  #     notifier_configured        = true
-  #     notification_sent          = !is_error(step.message.notify_token_issues)
-  #     tokens_requiring_attention = step.transform.build_report_data.value.has_issues
-  #     error_message              = is_error(step.message.notify_token_issues) ? error_message(step.message.notify_token_issues) : null
-  #     } : {
-  #     notifier_configured        = false
-  #     tokens_requiring_attention = step.transform.build_report_data.value.has_issues
-  #   }
-  # }
 }
-
