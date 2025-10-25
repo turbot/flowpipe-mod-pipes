@@ -28,9 +28,9 @@ pipeline "check_tenant_service_account_token_expiration" {
   # Debug: Check notifier structure
   step "transform" "debug_notifier_structure" {
     value = {
-      full_notifier     = jsonencode(param.notifier)
-      notifies_array    = jsonencode(param.notifier.notifies)
-      integration_types = jsonencode([for integration in param.notifier.notifies : integration.integration.type])
+      full_notifier     = param.notifier != null ? jsonencode(param.notifier) : "null"
+      notifies_array    = param.notifier != null ? jsonencode(param.notifier.notifies) : "null"
+      integration_types = param.notifier != null ? jsonencode([for integration in param.notifier.notifies : integration.integration.type]) : "null"
     }
   }
 
@@ -225,11 +225,11 @@ REPORT
   # Check if notifier has email integration
   step "transform" "check_email_integration" {
     value = {
-      has_email = try(length([
+      has_email = param.notifier != null ? try(length([
         for integration in param.notifier.notifies :
         integration
         if integration.integration.type == "email"
-      ]) > 0, false)
+      ]) > 0, false) : false
     }
   }
 
@@ -241,105 +241,149 @@ REPORT
     }
   }
 
-  # Create email-specific content (with better formatting)
-  step "transform" "email_content" {
+  # Create HTML content for email
+  step "transform" "html_content" {
     value = {
-      content = <<-EMAIL
-TENANT SERVICE ACCOUNT TOKEN STATUS REPORT
+      content = <<-HTML
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .header { background-color: #f4f4f4; padding: 15px; border-radius: 5px; }
+        .section { margin: 20px 0; }
+        .section-title { font-weight: bold; font-size: 16px; margin-bottom: 10px; color: #333; }
+        .token-entry { background-color: #f9f9f9; padding: 10px; margin: 10px 0; border-left: 4px solid #007cba; }
+        .token-field { margin: 5px 0; }
+        .label { font-weight: bold; }
+        .expiring { border-left-color: #ff9800; }
+        .expired { border-left-color: #f44336; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h2>Tenant Service Account Token Status Report</h2>
+        <p><strong>Tenant ID:</strong> ${param.tenant_id}</p>
+        <p><strong>Check Time:</strong> ${step.transform.summary_report.value.check_time}</p>
+        <p><strong>Expiry Watch Window:</strong> ${param.days_ahead} Days</p>
+    </div>
 
-Tenant ID: ${param.tenant_id}
-Check Time: ${step.transform.summary_report.value.check_time}
-Expiry Watch Window: ${param.days_ahead} Days
+    <div class="section">
+        <div class="section-title">Overview</div>
+        <p><strong>Service Accounts:</strong> Total: ${step.transform.summary_report.value.total_accounts}, With Expiring Tokens: ${step.transform.summary_report.value.total_issues}</p>
+        <p><strong>Token Status:</strong> Total: ${step.transform.summary_report.value.total_tokens}, Active: ${step.transform.summary_report.value.total_active}, Inactive: ${step.transform.summary_report.value.total_inactive}</p>
+        <p><strong>Token Expiration:</strong> Expiring (next ${param.days_ahead} days): ${step.transform.summary_report.value.total_expiring}, Expired: ${step.transform.summary_report.value.total_expired}</p>
+    </div>
 
-OVERVIEW
-Service Accounts: Total: ${step.transform.summary_report.value.total_accounts}, With Expiring Tokens: ${step.transform.summary_report.value.total_issues}
-Token Status: Total: ${step.transform.summary_report.value.total_tokens}, Active: ${step.transform.summary_report.value.total_active}, Inactive: ${step.transform.summary_report.value.total_inactive}
-Token Expiration: Expiring (next ${param.days_ahead} days): ${step.transform.summary_report.value.total_expiring}, Expired: ${step.transform.summary_report.value.total_expired}
+    ${length(step.transform.all_tokens_flat.value.expiring_tokens) > 0 ? join("", [
+      "<div class=\"section\"><div class=\"section-title\">⚠️ Expiring Tokens (within ${param.days_ahead} days)</div>",
+      join("", [for token_idx, token_data in step.transform.all_tokens_flat.value.expiring_tokens :
+        "<div class=\"token-entry expiring\"><div class=\"token-field\"><span class=\"label\">Service Account:</span> ${token_data.service_account_name}</div><div class=\"token-field\"><span class=\"label\">Token Name:</span> ${token_data.token.token_name}</div><div class=\"token-field\"><span class=\"label\">Token Status:</span> ${token_data.token.status}</div><div class=\"token-field\"><span class=\"label\">Expires On:</span> ${token_data.token.expires_at}</div><div class=\"token-field\"><span class=\"label\">Last 4:</span> ${token_data.token.last4}</div><div class=\"token-field\"><span class=\"label\">Token ID:</span> ${token_data.token.token_id}</div></div>"
+      ]),
+      "</div>"
+      ]) : ""}
 
-${step.transform.format_report.value.expiring_report}
-${step.transform.format_report.value.expired_report}
-EMAIL
-    }
+    ${length(step.transform.all_tokens_flat.value.expired_tokens) > 0 ? join("", [
+      "<div class=\"section\"><div class=\"section-title\">🚨 Expired Tokens</div>",
+      join("", [for token_idx, token_data in step.transform.all_tokens_flat.value.expired_tokens :
+        "<div class=\"token-entry expired\"><div class=\"token-field\"><span class=\"label\">Service Account:</span> ${token_data.service_account_name}</div><div class=\"token-field\"><span class=\"label\">Token Name:</span> ${token_data.token.token_name}</div><div class=\"token-field\"><span class=\"label\">Token Status:</span> ${token_data.token.status}</div><div class=\"token-field\"><span class=\"label\">Expired On:</span> ${token_data.token.expires_at}</div><div class=\"token-field\"><span class=\"label\">Last 4:</span> ${token_data.token.last4}</div><div class=\"token-field\"><span class=\"label\">Token ID:</span> ${token_data.token.token_id}</div></div>"
+      ]),
+      "</div>"
+]) : ""}
+
+</body>
+</html>
+HTML
+}
+}
+
+# Create Slack/other content (plain text)
+step "transform" "slack_content" {
+  value = {
+    content = step.transform.full_report.value.combined
   }
+}
 
-  # Create Slack/other content (plain text)
-  step "transform" "slack_content" {
-    value = {
-      content = step.transform.full_report.value.combined
-    }
+# Determine notification content based on integrations in the notifier
+step "transform" "select_notification_content" {
+  value = {
+    content = step.transform.check_email_integration.value.has_email ? step.transform.html_content.value.content : step.transform.slack_content.value.content
   }
+}
 
-  # Determine notification content based on integrations in the notifier
-  step "transform" "select_notification_content" {
-    value = {
-      content = step.transform.check_email_integration.value.has_email ? step.transform.email_content.value.content : step.transform.slack_content.value.content
-    }
+# Send notification if notifier is configured and there are tokens requiring attention
+step "message" "notify_token_issues" {
+  if       = param.notifier != null && step.transform.summary_report.value.has_issues
+  notifier = param.notifier
+  text     = step.transform.select_notification_content.value.content
+}
+
+output "formatted_summary" {
+  description = "Formatted summary for display - sent to all notification channels"
+  value       = step.transform.full_report.value.combined
+}
+
+# output "html_summary" {
+#   description = "HTML formatted summary for email notifications"
+#   value       = step.transform.html_content.value.content
+# }
+
+output "notification_status" {
+  description = "Notification delivery status"
+  value = param.notifier != null ? {
+    notifier_configured        = true
+    notification_sent          = !is_error(step.message.notify_token_issues)
+    tokens_requiring_attention = step.transform.summary_report.value.has_issues
+    error_message              = is_error(step.message.notify_token_issues) ? error_message(step.message.notify_token_issues) : null
+    } : {
+    notifier_configured        = false
+    tokens_requiring_attention = step.transform.summary_report.value.has_issues
   }
+}
 
-  # Send notification if notifier is configured and there are tokens requiring attention
-  step "message" "notify_token_issues" {
-    if       = param.notifier != null && step.transform.summary_report.value.has_issues
-    notifier = param.notifier
-    text     = step.transform.select_notification_content.value.content
+# Debug outputs to see notifier structure
+output "debug_notifier" {
+  description = "Debug: Notifier structure and email detection"
+  value = param.notifier != null ? {
+    notifier_configured     = true
+    notifier_structure      = step.transform.debug_notifier_structure.value
+    email_integration_check = step.transform.debug_email_check.value
+    selected_content_type   = step.transform.check_email_integration.value.has_email ? "email" : "slack"
+    } : {
+    notifier_configured     = false
+    notifier_structure      = null
+    email_integration_check = null
+    selected_content_type   = "none"
   }
+}
 
-  output "formatted_summary" {
-    description = "Formatted summary for display - sent to all notification channels"
-    value       = step.transform.full_report.value.combined
-  }
+# #####
+# # Slack-specific parameters
+# param "slack_cred" {
+#   type        = string
+#   description = "Name for Slack credentials to use. Required when 'slack' is in notification_channels."
+#   default     = "default"
+#   optional    = true
+# }
 
-  output "notification_status" {
-    description = "Notification delivery status"
-    value = param.notifier != null ? {
-      notifier_configured        = true
-      notification_sent          = !is_error(step.message.notify_token_issues)
-      tokens_requiring_attention = step.transform.summary_report.value.has_issues
-      error_message              = is_error(step.message.notify_token_issues) ? error_message(step.message.notify_token_issues) : null
-      } : {
-      notifier_configured        = false
-      tokens_requiring_attention = step.transform.summary_report.value.has_issues
-    }
-  }
-
-  # Debug outputs to see notifier structure
-  output "debug_notifier" {
-    description = "Debug: Notifier structure and email detection"
-    value = param.notifier != null ? {
-      notifier_structure      = step.transform.debug_notifier_structure.value
-      email_integration_check = step.transform.debug_email_check.value
-      selected_content_type   = step.transform.check_email_integration.value.has_email ? "email" : "slack"
-      } : {
-      notifier_configured = false
-    }
-  }
-
-  # #####
-  # # Slack-specific parameters
-  # param "slack_cred" {
-  #   type        = string
-  #   description = "Name for Slack credentials to use. Required when 'slack' is in notification_channels."
-  #   default     = "default"
-  #   optional    = true
-  # }
-
-  # param "slack_channel" {
-  #   type        = string
-  #   description = "Slack channel to send notifications to (e.g., #alerts, #security). Required when 'slack' is in notification_channels."
-  #   default     = "test-build-slack-room"
-  # }
+# param "slack_channel" {
+#   type        = string
+#   description = "Slack channel to send notifications to (e.g., #alerts, #security). Required when 'slack' is in notification_channels."
+#   default     = "test-build-slack-room"
+# }
 
 
-  # step "transform" "slack_message" {
-  #   value = step.transform.full_report.value.combined
-  # }
+# step "transform" "slack_message" {
+#   value = step.transform.full_report.value.combined
+# }
 
-  # step "pipeline" "send_slack_notification" {
-  #   pipeline = slack.pipeline.post_message
-  #   args = {
-  #     # cred    = param.slack_cred
-  #     channel = param.slack_channel
-  #     text    = step.transform.slack_message.value
-  #   }
-  # }
+# step "pipeline" "send_slack_notification" {
+#   pipeline = slack.pipeline.post_message
+#   args = {
+#     # cred    = param.slack_cred
+#     channel = param.slack_channel
+#     text    = step.transform.slack_message.value
+#   }
+# }
 }
 
